@@ -1,0 +1,83 @@
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const { ask, recommend, metiersCount, metiers, getSimilarMetiers } = require('./ragService');
+
+const PORT = Number(process.env.PORT || 3000);
+const MAX_BODY_BYTES = 8_000_000;
+
+function json(res, status, body) {
+  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+  res.end(JSON.stringify(body));
+}
+
+function sendFile(res, file, contentType) {
+  fs.readFile(file, (error, data) => {
+    if (error) return json(res, 500, { error: 'Impossible de charger l’interface.' });
+    res.writeHead(200, { 'Content-Type': contentType });
+    res.end(data);
+  });
+}
+
+function readJson(req) {
+  return new Promise((resolve, reject) => {
+    let raw = '';
+    req.on('data', (chunk) => {
+      raw += chunk;
+      if (raw.length > MAX_BODY_BYTES) reject(new Error('Corps de requête trop volumineux.'));
+    });
+    req.on('end', () => { try { resolve(JSON.parse(raw || '{}')); } catch { reject(new Error('JSON invalide.')); } });
+    req.on('error', reject);
+  });
+}
+
+http.createServer(async (req, res) => {
+  const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  if (req.method === 'OPTIONS') return json(res, 204, {});
+
+  // API Routes
+  if (url.pathname === '/health') return json(res, 200, { status: 'ok', metiers: metiersCount });
+
+  if (url.pathname.startsWith('/api/')) {
+    try {
+      const body = req.method === 'POST' ? await readJson(req) : Object.fromEntries(url.searchParams);
+      if (url.pathname === '/api/chat') return json(res, 200, await ask(body.question));
+      if (url.pathname === '/api/recommendations') return json(res, 200, await recommend(body.cvText || body.profileText, Math.min(Number(body.limit) || 5, 20)));
+      if (url.pathname === '/api/metiers') return json(res, 200, metiers);
+      if (url.pathname === '/api/metiers/similar') {
+        const queryUrl = body.url || url.searchParams.get('url');
+        const limit = Math.min(Number(body.limit || url.searchParams.get('limit')) || 5, 10);
+        return json(res, 200, getSimilarMetiers(queryUrl, limit));
+      }
+      return json(res, 404, { error: 'Route API introuvable.' });
+    } catch (error) {
+      return json(res, 400, { error: error.message });
+    }
+  }
+
+  // Generic static files serving from /public
+  const publicDir = path.join(__dirname, 'public');
+  let safePath = url.pathname === '/' ? 'index.html' : url.pathname;
+  safePath = safePath.replace(/^(\.\.[\/\\])+/, '');
+  const filePath = path.resolve(publicDir, safePath.startsWith('/') ? safePath.slice(1) : safePath);
+
+
+  if (filePath.startsWith(publicDir) && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    const ext = path.extname(filePath).toLowerCase();
+    const mimeTypes = {
+      '.html': 'text/html; charset=utf-8',
+      '.css': 'text/css; charset=utf-8',
+      '.js': 'application/javascript; charset=utf-8',
+      '.json': 'application/json; charset=utf-8',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.gif': 'image/gif',
+      '.svg': 'image/svg+xml',
+      '.ico': 'image/x-icon',
+    };
+    return sendFile(res, filePath, mimeTypes[ext] || 'application/octet-stream');
+  }
+
+  return json(res, 404, { error: 'Ressource introuvable.' });
+}).listen(PORT, () => console.log(`RTMC RAG disponible sur http://localhost:${PORT}`));
+

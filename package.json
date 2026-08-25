@@ -1,0 +1,18 @@
+{
+  "name": "refmetier",
+  "version": "1.0.0",
+  "description": "",
+  "main": "scrapeRtmc.js",
+  "scripts": {
+    "scrape": "node scrapeRtmc.js",
+    "embed": "node --env-file=.env generateEmbeddings.js",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "playwright": "^1.62.1"
+  }
+}

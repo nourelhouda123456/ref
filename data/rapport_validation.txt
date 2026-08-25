@@ -1,0 +1,33 @@
+=== RAPPORT DE VALIDATION - 2026-08-01T13:50:17.401Z ===
+
+Total de fiches chargees : 530
+
+Doublons par URL : 0
+Doublons par code metier : 0
+
+Champs manquants :
+   - code : 0 fiches concernees
+   - titre : 0 fiches concernees
+   - definition : 0 fiches concernees
+   - domaineGrand : 0 fiches concernees
+
+Fiches sans aucune competence technique : 0
+
+Repartition par domaine :
+   - Industrie : 97 metiers
+   - Service à la personne et à la société : 59 metiers
+   - Commerce, vente et grande distribution : 42 metiers
+   - Construction, bâtiment et travaux publiques : 40 metiers
+   - Support à l'entreprise : 35 metiers
+   - Transport et logistique : 34 metiers
+   - Santé : 32 metiers
+   - Hôtellerie, restauration et tourisme : 29 metiers
+   - Installation et maintenance : 29 metiers
+   - Technologies de l'Information et de la Communication-TIC : 29 metiers
+   - Agriculture et pêche : 26 metiers
+   - Arts et Spectacle : 23 metiers
+   - Banque et assurance : 21 metiers
+   - Communication, média et multimédia : 18 metiers
+   - Artisanat et façonnage d'ouvrages d'art : 16 metiers
+
+Fichier nettoye sauvegarde : C:\Users\Msi\Desktop\refMetier\data\metiers_clean.json (530 fiches uniques)
