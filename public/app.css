@@ -126,7 +126,7 @@ img{max-width:100%}
   padding-top:calc(var(--hh) + 56px);
   padding-bottom:32px;
   background:linear-gradient(150deg,#1e3a8a 0%,#2563eb 55%,#3b82f6 100%);
-  position:relative;overflow:hidden;
+  position:relative;overflow:visible;
 }
 /* Subtle dot grid */
 .hero-band::before{
