@@ -162,8 +162,11 @@
   <div class="modal-overlay" id="compare-modal" role="dialog" aria-modal="true">
     <div class="modal-box">
       <div class="modal-head">
-        <span data-i18n="compare_modal_title">Comparateur de Métiers</span>
-        <button class="modal-close" id="btn-close-compare-modal">✕</button>
+        <div class="modal-title-wrap">
+          <span class="modal-head-icon">⚖️</span>
+          <span data-i18n="compare_modal_title">Comparateur de Métiers</span>
+        </div>
+        <button class="modal-close" id="btn-close-compare-modal" aria-label="Fermer">✕</button>
       </div>
       <div class="modal-body" id="comparison-content"></div>
     </div>

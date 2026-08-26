@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ─── Compact SVG Radar ─────────────────────────────────────────────
   function compactRadar(item, size = 140, isLarge = false) {
     const cats = [
-      { key: 'competencesTechniquesSavoirFaire', label: 'Savoir-faire', color: '#1a4fba' },
+      { key: 'competencesTechniquesSavoirFaire', label: 'Savoir-faire', color: '#1d4ed8' },
       { key: 'competencesTechniquesSavoir',      label: 'Savoirs',      color: '#7c3aed' },
       { key: 'competencesComportementales',      label: 'Soft Skills',  color: '#059669' },
       { key: 'competencesNumeriques',            label: 'Numérique',    color: '#d97706' },
@@ -138,24 +138,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const maxC   = Math.max(...counts, 1);
     const N      = cats.length;
     const cx = size / 2, cy = size / 2;
-    const maxR = isLarge ? size * 0.28 : size * 0.36;
+    const maxR = isLarge ? size * 0.32 : size * 0.30;
 
     // Build grid rings
     let rings = '';
     const strokeW = isLarge ? 1.5 : 1;
-    [0.33, 0.66, 1].forEach(f => {
+    [0.33, 0.66, 1].forEach((f, idx) => {
       const pts = cats.map((_, i) => {
         const a = (i / N) * 2 * Math.PI - Math.PI / 2;
         return `${cx + maxR * f * Math.cos(a)},${cy + maxR * f * Math.sin(a)}`;
       }).join(' ');
-      rings += `<polygon points="${pts}" fill="none" stroke="#e2e8f0" stroke-width="${strokeW}"/>`;
+      const bgFill = idx === 2 ? '#f8fafc' : 'none';
+      rings += `<polygon points="${pts}" fill="${bgFill}" stroke="#cbd5e1" stroke-width="${strokeW}"/>`;
     });
 
     // Build axes
     let axes = '';
     cats.forEach((_, i) => {
       const a = (i / N) * 2 * Math.PI - Math.PI / 2;
-      axes += `<line x1="${cx}" y1="${cy}" x2="${cx + maxR * Math.cos(a)}" y2="${cy + maxR * Math.sin(a)}" stroke="#e2e8f0" stroke-width="${strokeW}"/>`;
+      axes += `<line x1="${cx}" y1="${cy}" x2="${cx + maxR * Math.cos(a)}" y2="${cy + maxR * Math.sin(a)}" stroke="#cbd5e1" stroke-width="${strokeW}" stroke-dasharray="2 2"/>`;
     });
 
     // Build data polygon
@@ -165,10 +166,10 @@ document.addEventListener('DOMContentLoaded', () => {
       return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
     }).join(' ');
 
-    // Labels
+    // Labels: complete, untruncated category names with count
     let labels = '';
-    const labelFontSize = isLarge ? 11 : 7.5;
-    const labelOffset = isLarge ? 18 : 14;
+    const labelFontSize = isLarge ? 12 : (size >= 160 ? 10 : 8.5);
+    const labelOffset = isLarge ? 22 : (size >= 160 ? 16 : 13);
     cats.forEach((c, i) => {
       const a  = (i / N) * 2 * Math.PI - Math.PI / 2;
       const r  = maxR + labelOffset;
@@ -178,31 +179,29 @@ document.addEventListener('DOMContentLoaded', () => {
       
       let dy = '';
       if (anchor === 'middle') {
-        dy = a < 0 ? 'dy="-4"' : 'dy="10"';
+        dy = a < 0 ? 'dy="-4"' : 'dy="9"';
       } else {
         dy = 'dy="3"';
       }
 
-      // First real skill as label, else category name
-      const skill = (item[c.key] || [])[0];
-      const maxLen = isLarge ? 30 : 18;
-      const txt   = skill ? skill.slice(0, maxLen) + (skill.length > maxLen ? '…' : '') : c.label;
-      labels += `<text x="${lx}" y="${ly}" ${dy} text-anchor="${anchor}" font-size="${labelFontSize}" font-weight="${isLarge ? '500' : 'normal'}" fill="#475569">${esc(txt)}</text>`;
+      const count = counts[i];
+      const txt = count > 0 ? `${c.label} (${count})` : c.label;
+      labels += `<text x="${lx}" y="${ly}" ${dy} text-anchor="${anchor}" font-size="${labelFontSize}" font-weight="700" fill="${c.color}">${esc(txt)}</text>`;
     });
 
     // Dot points on polygon
-    const dotR = isLarge ? 4 : 3;
+    const dotR = isLarge ? 5 : 3.5;
     const dots = counts.map((v, i) => {
       const r = (v / maxC) * maxR;
       const a = (i / N) * 2 * Math.PI - Math.PI / 2;
-      return `<circle cx="${cx + r * Math.cos(a)}" cy="${cy + r * Math.sin(a)}" r="${dotR}" fill="#1a4fba" stroke="#fff" stroke-width="1.5"/>`;
+      return `<circle cx="${cx + r * Math.cos(a)}" cy="${cy + r * Math.sin(a)}" r="${dotR}" fill="${cats[i].color}" stroke="#fff" stroke-width="2"/>`;
     }).join('');
 
-    const strokePolyW = isLarge ? 2.5 : 1.5;
+    const strokePolyW = isLarge ? 2.5 : 2;
     const className = isLarge ? 'large-radar-svg' : 'compact-radar-svg';
     return `<svg viewBox="0 0 ${size} ${size}" class="${className}" aria-hidden="true" overflow="visible">
       ${rings}${axes}
-      <polygon points="${pts}" fill="rgba(26,79,186,0.18)" stroke="#1a4fba" stroke-width="${strokePolyW}" stroke-linejoin="round"/>
+      <polygon points="${pts}" fill="rgba(37,99,235,0.22)" stroke="#2563eb" stroke-width="${strokePolyW}" stroke-linejoin="round"/>
       ${dots}
       ${labels}
     </svg>`;
@@ -833,34 +832,104 @@ document.addEventListener('DOMContentLoaded', () => {
     const selected = window.comparedJobs.map(url => window.allMetiers.find(m => m.url === url)).filter(Boolean);
 
     if (!selected.length) {
-      c.innerHTML = `<div class="empty-state"><h3>${d.compare_empty_title}</h3><p>${d.compare_empty_text}</p></div>`;
+      c.innerHTML = `
+        <div class="compare-empty-state">
+          <div class="compare-empty-icon">⚖️</div>
+          <h3>${d.compare_empty_title}</h3>
+          <p>${d.compare_empty_text}</p>
+        </div>`;
       return;
     }
 
-    c.innerHTML = `<div class="compare-grid">${selected.map(m => {
-      const sal = getSalaryRange(m);
-      return `<div class="compare-col">
-        <span class="job-card-code" style="margin-bottom:10px;display:inline-block">${esc(m.code)}</span>
-        <h3>${esc(m.titre)}</h3>
-        <div class="compare-row"><strong>Secteur</strong>${esc(m.domaineGrand)}</div>
-        <div class="compare-row"><strong>Salaire estimé</strong>${sal.min}–${sal.max} TND/mois*</div>
-        <div class="compare-row"><strong>Accès</strong>${esc(m.accesEmploi || 'N/A')}</div>
-        <div class="compare-row"><strong>Savoir-faire (top 5)</strong>
-          <ul style="margin-top:6px;padding-left:16px;font-size:13px;color:var(--text-muted)">
-            ${(m.competencesTechniquesSavoirFaire||[]).slice(0,5).map(s => `<li>${esc(s)}</li>`).join('')}
-          </ul>
-        </div>
-        <div class="compare-row"><strong>Soft Skills</strong>
-          <ul style="margin-top:6px;padding-left:16px;font-size:13px;color:var(--text-muted)">
-            ${(m.competencesComportementales||[]).slice(0,4).map(s => `<li>${esc(s)}</li>`).join('')}
-          </ul>
-        </div>
-        <div style="margin-top:16px;display:flex;gap:8px">
-          <button class="btn-primary btn-open-drawer-cmp" data-url="${esc(m.url)}" style="font-size:12px;padding:8px 14px">Voir fiche →</button>
-          <button class="btn-ghost btn-remove-cmp" data-url="${esc(m.url)}" style="font-size:12px">✕</button>
-        </div>
-      </div>`;
-    }).join('')}</div>`;
+    c.innerHTML = `
+      <div class="compare-grid">
+        ${selected.map(m => {
+          const sal = getSalaryRange(m);
+          const totalSkills = (m.competencesTechniquesSavoirFaire||[]).length
+            + (m.competencesTechniquesSavoir||[]).length
+            + (m.competencesComportementales||[]).length
+            + (m.competencesNumeriques||[]).length;
+
+          return `
+            <div class="compare-col">
+              <div class="compare-col-header">
+                <div class="compare-header-top">
+                  <span class="drawer-code-badge">${esc(m.code)}</span>
+                  <button class="btn-remove-cmp" data-url="${esc(m.url)}" title="Retirer de la comparaison" aria-label="Retirer">✕</button>
+                </div>
+                <h3 class="compare-job-title">${esc(m.titre)}</h3>
+                <div class="compare-domain">
+                  <span class="cd-icon">🏢</span>
+                  <span>${esc(m.domaineGrand)} ${m.domaineProfessionnel ? '› ' + esc(m.domaineProfessionnel) : ''}</span>
+                </div>
+              </div>
+
+              <!-- Salary highlight -->
+              <div class="compare-salary-badge">
+                <span class="cs-icon">💰</span>
+                <div>
+                  <div class="cs-val">${sal.min} – ${sal.max} TND / mois</div>
+                  <div class="cs-note">*Estimation INS 2022 · ${totalSkills} compétences</div>
+                </div>
+              </div>
+
+              <!-- Mini Radar Chart -->
+              <div class="compare-radar-wrap">
+                ${compactRadar(m, 180)}
+              </div>
+
+              <!-- Details sections -->
+              <div class="compare-section">
+                <div class="compare-sec-title sec-path">🎓 Accès &amp; Formation</div>
+                <div class="compare-sec-box">${esc(m.accesEmploi || 'Non spécifié dans le référentiel.')}</div>
+              </div>
+
+              <div class="compare-section">
+                <div class="compare-sec-title sec-sf">⚡ Savoir-faire clés (Top 5)</div>
+                <div class="compare-skills-list">
+                  ${(m.competencesTechniquesSavoirFaire || []).length ?
+                    (m.competencesTechniquesSavoirFaire || []).slice(0, 5).map(s => `<span class="skill-chip sf">${esc(s)}</span>`).join('')
+                    : '<span class="compare-empty-note">Aucun savoir-faire renseigné</span>'
+                  }
+                </div>
+              </div>
+
+              ${(m.competencesTechniquesSavoir || []).length ? `
+              <div class="compare-section">
+                <div class="compare-sec-title sec-sv">📘 Connaissances théoriques</div>
+                <div class="compare-skills-list">
+                  ${(m.competencesTechniquesSavoir || []).slice(0, 3).map(s => `<span class="skill-chip sv">${esc(s)}</span>`).join('')}
+                </div>
+              </div>` : ''}
+
+              <div class="compare-section">
+                <div class="compare-sec-title sec-ss">🤝 Soft Skills</div>
+                <div class="compare-skills-list">
+                  ${(m.competencesComportementales || []).length ?
+                    (m.competencesComportementales || []).slice(0, 4).map(s => `<span class="skill-chip ss">${esc(s)}</span>`).join('')
+                    : '<span class="compare-empty-note">Aucune compétence comportementale renseignée</span>'
+                  }
+                </div>
+              </div>
+
+              ${(m.competencesNumeriques || []).length ? `
+              <div class="compare-section">
+                <div class="compare-sec-title sec-sn">💻 Compétences numériques</div>
+                <div class="compare-skills-list">
+                  ${(m.competencesNumeriques || []).slice(0, 3).map(s => `<span class="skill-chip sn">${esc(s)}</span>`).join('')}
+                </div>
+              </div>` : ''}
+
+              <div class="compare-col-footer">
+                <button class="btn-primary btn-open-drawer-cmp" data-url="${esc(m.url)}">
+                  Voir la fiche complète →
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
 
     c.querySelectorAll('.btn-open-drawer-cmp').forEach(b => b.addEventListener('click', () => {
       $('#compare-modal').classList.remove('open');
