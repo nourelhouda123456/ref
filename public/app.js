@@ -838,7 +838,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     c.innerHTML = `<div class="compare-grid">${selected.map(m => {
-      const sal = salaryRange(m.code);
+      const sal = getSalaryRange(m);
       return `<div class="compare-col">
         <span class="job-card-code" style="margin-bottom:10px;display:inline-block">${esc(m.code)}</span>
         <h3>${esc(m.titre)}</h3>
