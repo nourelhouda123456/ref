@@ -1,4 +1,5 @@
 const http = require('http');
+require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const { ask, recommend, metiersCount, metiers, getSimilarMetiers } = require('./ragService');

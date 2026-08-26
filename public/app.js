@@ -137,12 +137,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const counts = cats.map(c => (item[c.key] || []).length);
     const maxC   = Math.max(...counts, 1);
     const N      = cats.length;
+
+    // Determine if we're rendering a "big" demo radar (size >= 240)
+    const isBig  = size >= 240;
     const cx = size / 2, cy = size / 2;
-    const maxR = isLarge ? size * 0.32 : size * 0.30;
+    const maxR = isBig ? size * 0.30 : isLarge ? size * 0.32 : size * 0.30;
 
     // Build grid rings
     let rings = '';
-    const strokeW = isLarge ? 1.5 : 1;
+    const strokeW = (isLarge || isBig) ? 1.5 : 1;
     [0.33, 0.66, 1].forEach((f, idx) => {
       const pts = cats.map((_, i) => {
         const a = (i / N) * 2 * Math.PI - Math.PI / 2;
@@ -168,8 +171,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Labels: complete, untruncated category names with count
     let labels = '';
-    const labelFontSize = isLarge ? 12 : (size >= 160 ? 10 : 8.5);
-    const labelOffset = isLarge ? 22 : (size >= 160 ? 16 : 13);
+    const labelFontSize = isBig ? 13 : isLarge ? 12 : (size >= 160 ? 10 : 8.5);
+    const labelOffset   = isBig ? 28 : isLarge ? 22 : (size >= 160 ? 16 : 13);
     cats.forEach((c, i) => {
       const a  = (i / N) * 2 * Math.PI - Math.PI / 2;
       const r  = maxR + labelOffset;
@@ -190,14 +193,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Dot points on polygon
-    const dotR = isLarge ? 5 : 3.5;
+    const dotR = (isLarge || isBig) ? 5 : 3.5;
     const dots = counts.map((v, i) => {
       const r = (v / maxC) * maxR;
       const a = (i / N) * 2 * Math.PI - Math.PI / 2;
       return `<circle cx="${cx + r * Math.cos(a)}" cy="${cy + r * Math.sin(a)}" r="${dotR}" fill="${cats[i].color}" stroke="#fff" stroke-width="2"/>`;
     }).join('');
 
-    const strokePolyW = isLarge ? 2.5 : 2;
+    const strokePolyW = (isLarge || isBig) ? 2.5 : 2;
     const className = isLarge ? 'large-radar-svg' : 'compact-radar-svg';
     return `<svg viewBox="0 0 ${size} ${size}" class="${className}" aria-hidden="true" overflow="visible">
       ${rings}${axes}
@@ -330,6 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
       pill.addEventListener('click', () => {
         const isActive = pill.classList.contains('active');
         $$('.sector-pill').forEach(p => p.classList.remove('active'));
+        $$('.skill-pill').forEach(p => p.classList.remove('active'));
         selectedDomain    = isActive ? null : domain;
         activeSearchQuery = '';
         activeSkillFilter = null;
@@ -357,12 +361,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Filter
     let list = window.allMetiers;
     if (selectedDomain)    list = list.filter(m => m.domaineGrand === selectedDomain);
-    if (activeSkillFilter) list = list.filter(m => [
-      ...(m.competencesTechniquesSavoirFaire || []),
-      ...(m.competencesTechniquesSavoir || []),
-      ...(m.competencesComportementales || []),
-      ...(m.competencesNumeriques || [])
-    ].map(s => s.toLowerCase()).includes(activeSkillFilter.toLowerCase()));
+    if (activeSkillFilter) {
+      const target = activeSkillFilter.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+      list = list.filter(m => [
+        ...(m.competencesTechniquesSavoirFaire || []),
+        ...(m.competencesTechniquesSavoir || []),
+        ...(m.competencesComportementales || []),
+        ...(m.competencesNumeriques || [])
+      ].some(s => s && s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(target)));
+    }
 
     if (activeSearchQuery) {
       const q = activeSearchQuery.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -451,23 +458,51 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!cloud) return;
     cloud.innerHTML = '';
 
-    const popular = [
-      'Développement informatique', 'JavaScript', 'Python', 'SQL',
-      'Gestion de projet', 'Techniques de vente', 'Règles de sécurité',
-      'Éléments de base en comptabilité', 'Travail d\'équipe', 'Rigueur et précision',
-      'Maintenance industrielle', 'Communication', 'Soins infirmiers', 'Soudure',
-    ];
+    // Extract all real skills from dataset with frequency
+    const skillCounts = new Map();
+    (window.allMetiers || []).forEach(m => {
+      const seenInJob = new Set();
+      [
+        ...(m.competencesTechniquesSavoirFaire || []),
+        ...(m.competencesTechniquesSavoir || []),
+        ...(m.competencesComportementales || []),
+        ...(m.competencesNumeriques || [])
+      ].forEach(s => {
+        const trimmed = s && s.trim();
+        if (trimmed && trimmed.length >= 3 && trimmed.length <= 42) {
+          const key = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+          const normKey = key.toLowerCase();
+          if (!seenInJob.has(normKey)) {
+            seenInJob.add(normKey);
+            skillCounts.set(key, (skillCounts.get(key) || 0) + 1);
+          }
+        }
+      });
+    });
 
-    popular.forEach(skill => {
+    // Select top 22 most popular real skills
+    const topSkills = Array.from(skillCounts.entries())
+      .filter(([_, count]) => count >= 3)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 22);
+
+    topSkills.forEach(([skill, count]) => {
       const btn = document.createElement('button');
-      btn.className = 'skill-pill';
-      btn.textContent = '⚡ ' + skill;
+      const isActive = activeSkillFilter && activeSkillFilter.toLowerCase() === skill.toLowerCase();
+      btn.className = 'skill-pill' + (isActive ? ' active' : '');
+      btn.innerHTML = `<span class="sp-icon">⚡</span><span class="sp-text">${esc(skill)}</span><span class="sp-count">${count}</span>`;
       btn.addEventListener('click', () => {
-        activeSkillFilter = skill;
-        selectedDomain    = null;
-        activeSearchQuery = '';
-        $('#hero-search-input').value = skill;
-        $$('.sector-pill').forEach(p => p.classList.remove('active'));
+        if (activeSkillFilter && activeSkillFilter.toLowerCase() === skill.toLowerCase()) {
+          activeSkillFilter = null;
+          $('#hero-search-input').value = '';
+        } else {
+          activeSkillFilter = skill;
+          selectedDomain    = null;
+          activeSearchQuery = '';
+          $('#hero-search-input').value = skill;
+          $$('.sector-pill').forEach(p => p.classList.remove('active'));
+        }
+        $$('.skill-pill').forEach(p => p.classList.toggle('active', p === btn && activeSkillFilter !== null));
         visibleCount = 12;
         renderGrid();
         scrollToResults();
@@ -485,34 +520,73 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!job) return;
     const sal = getSalaryRange(job);
 
+    const sfChips = (job.competencesTechniquesSavoirFaire||[]).slice(0,4)
+      .map(s => `<span class="skill-chip sf">${esc(s)}</span>`).join('');
+    const svChips = (job.competencesTechniquesSavoir||[]).slice(0,3)
+      .map(s => `<span class="skill-chip sv">${esc(s)}</span>`).join('');
+    const ssChips = (job.competencesComportementales||[]).slice(0,3)
+      .map(s => `<span class="skill-chip ss">${esc(s)}</span>`).join('');
+    const snChips = (job.competencesNumeriques||[]).slice(0,2)
+      .map(s => `<span class="skill-chip sn">${esc(s)}</span>`).join('');
+
     box.innerHTML = `
       <div class="demo-card">
-        <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
-          <span class="job-card-code">${esc(job.code)}</span>
-          <span style="color:var(--text-muted);font-size:13px">${esc(job.domaineGrand)}</span>
+
+        <!-- Header: full-width title block -->
+        <div class="demo-top-header">
+          <div class="demo-top-meta">
+            <span class="job-card-code">${esc(job.code)}</span>
+            <span class="demo-sector-badge">${esc(job.domaineGrand)}</span>
+          </div>
+          <h2 class="demo-title">${esc(job.titre)}</h2>
+          <p class="demo-desc">${esc((job.definition || job.resume || '').slice(0, 200))}…</p>
         </div>
-        <h3 style="font-size:22px;font-weight:800;margin-bottom:12px">${esc(job.titre)}</h3>
-        <div style="display:grid;grid-template-columns:1fr auto;gap:24px;align-items:start">
-          <div>
-            <p style="font-size:14px;color:var(--text-muted);line-height:1.7;margin-bottom:16px">${esc(job.definition || job.resume || '')}</p>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
-              ${(job.competencesTechniquesSavoirFaire||[]).slice(0,5).map(s => `<span class="skill-chip sf">${esc(s)}</span>`).join('')}
-              ${(job.competencesComportementales||[]).slice(0,3).map(s => `<span class="skill-chip ss">${esc(s)}</span>`).join('')}
-              ${(job.competencesNumeriques||[]).slice(0,2).map(s => `<span class="skill-chip sn">${esc(s)}</span>`).join('')}
-            </div>
-            <div class="drawer-salary-block">
-              <span class="drawer-salary-icon">💰</span>
-              <div>
-                <div class="drawer-salary-val">${sal.min} – ${sal.max} TND / mois</div>
-                <div class="drawer-salary-note">*Basé sur données INS 2022</div>
-              </div>
+
+        <!-- Center section: radar + skills side by side -->
+        <div class="demo-center-layout">
+
+          <!-- Left: big radar -->
+          <div class="demo-radar-panel">
+            <div class="demo-radar-label">📊 Profil de compétences</div>
+            <div class="demo-radar-svg-wrap">
+              ${compactRadar(job, 320)}
             </div>
           </div>
-          <div id="demo-radar-container" style="flex-shrink:0">${compactRadar(job, 170)}</div>
+
+          <!-- Right: skills grouped -->
+          <div class="demo-skills-panel">
+            ${sfChips ? `<div class="demo-skill-group">
+              <div class="demo-skill-group-title" style="color:#1d4ed8;border-color:#bfdbfe">⚡ Savoir-faire techniques</div>
+              <div class="demo-chips-wrap">${sfChips}</div>
+            </div>` : ''}
+            ${svChips ? `<div class="demo-skill-group">
+              <div class="demo-skill-group-title" style="color:#7c3aed;border-color:#c4b5fd">📚 Savoirs</div>
+              <div class="demo-chips-wrap">${svChips}</div>
+            </div>` : ''}
+            ${ssChips ? `<div class="demo-skill-group">
+              <div class="demo-skill-group-title" style="color:#065f46;border-color:#6ee7b7">🤝 Soft Skills</div>
+              <div class="demo-chips-wrap">${ssChips}</div>
+            </div>` : ''}
+            ${snChips ? `<div class="demo-skill-group">
+              <div class="demo-skill-group-title" style="color:#92400e;border-color:#fcd34d">💻 Numérique</div>
+              <div class="demo-chips-wrap">${snChips}</div>
+            </div>` : ''}
+          </div>
+
         </div>
-        <div style="margin-top:20px">
+
+        <!-- Footer: salary + button -->
+        <div class="demo-footer-bar">
+          <div class="drawer-salary-block" style="flex:1;max-width:380px">
+            <span class="drawer-salary-icon">💰</span>
+            <div>
+              <div class="drawer-salary-val">${sal.min} – ${sal.max} TND / mois</div>
+              <div class="drawer-salary-note">*Basé sur données INS 2022</div>
+            </div>
+          </div>
           <button class="btn-primary" id="btn-demo-details">Voir la fiche complète →</button>
         </div>
+
       </div>
     `;
 
@@ -598,6 +672,7 @@ document.addEventListener('DOMContentLoaded', () => {
       selectedDomain    = null;
       activeSkillFilter = null;
       $$('.sector-pill').forEach(p => p.classList.remove('active'));
+      $$('.skill-pill').forEach(p => p.classList.remove('active'));
       visibleCount = 12;
       renderGrid();
       scrollToResults();
@@ -614,6 +689,7 @@ document.addEventListener('DOMContentLoaded', () => {
         activeSkillFilter = null;
         input.value       = '';
         $$('.sector-pill').forEach(p => p.classList.remove('active'));
+        $$('.skill-pill').forEach(p => p.classList.remove('active'));
         visibleCount = 12;
         renderGrid();
       });
@@ -943,48 +1019,143 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ─── Chat Widget ───────────────────────────────────────────────────
   function initChat() {
-    const fab   = $('#chat-widget-trigger');
-    const win   = $('#chat-widget-window');
-    const close = $('#chat-widget-close');
-    const form  = $('#chat-widget-form');
+    const fab = $('#chat-widget-trigger');
+    const win = $('#chat-widget-window');
+    const closeBtn = $('#chat-widget-close');
+    const form = $('#chat-widget-form');
     const input = $('#chat-widget-input');
     if (!fab || !win) return;
 
-    fab.onclick   = () => win.classList.toggle('open');
-    close.onclick = () => win.classList.remove('open');
+    // Simple UI (no CV tab)
+    win.innerHTML = `
+      <div class="chat-header">
+        <div class="chat-header-info">
+          <span class="chat-header-icon">🤖</span>
+          <div>
+            <div class="chat-header-title">Assistant IA RTMC</div>
+            <div class="chat-header-sub" id="chat-mode-badge">Mode: Lexical</div>
+          </div>
+        </div>
+        <button id="chat-widget-close" class="chat-close-btn" aria-label="Fermer">✕</button>
+      </div>
 
-    form.onsubmit = async e => {
+      <div class="chat-messages" id="chat-widget-messages">
+        <div class="chat-msg assistant">
+          <div class="chat-bubble">
+            👋 Bonjour ! Posez-moi une question sur les métiers, les compétences, les formations…<br><br>
+          </div>
+        </div>
+      </div>
+
+      <form class="chat-input-row" id="chat-widget-form">
+        <input type="text" id="chat-widget-input" placeholder="Ex: Quels métiers utilisent Python ?" autocomplete="off">
+        <button type="submit" class="chat-send-btn" title="Envoyer">↑</button>
+      </form>
+    `;
+
+    // Re-query elements after rebuild
+    const closeBtn2 = $('#chat-widget-close');
+    const qForm = $('#chat-widget-form');
+    const qInput = $('#chat-widget-input');
+    const modeBadge = $('#chat-mode-badge');
+
+    fab.onclick = () => { win.classList.toggle('open'); if (win.classList.contains('open')) qInput?.focus(); };
+    closeBtn2.onclick = () => win.classList.remove('open');
+
+    // Question submit
+    qForm.onsubmit = async e => {
       e.preventDefault();
-      const q = input.value.trim();
+      const q = qInput.value.trim();
       if (!q) return;
-      addBubble('user', q);
-      input.value = '';
-      const tid = addBubble('typing', '…');
+      chatAddBubble('user', q);
+      qInput.value = '';
+      const tid = chatAddTyping();
       try {
-        const res  = await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ question: q }) });
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: q })
+        });
         const data = await res.json();
-        document.getElementById(tid)?.remove();
-        addBubble('assistant', data.answer || 'Désolé, pas de réponse.');
+        chatRemove(tid);
+        chatAddBubble('assistant', data.answer || 'Désolé, aucune réponse trouvée.');
+        if (data.sources && data.sources.length) chatAddSources(data.sources);
+        if (modeBadge) modeBadge.textContent = `Mode: ${data.mode === 'semantic' ? '🧠 Sémantique' : '🔤 Lexical'}`;
       } catch {
-        document.getElementById(tid)?.remove();
-        addBubble('assistant', 'Erreur de connexion.');
+        chatRemove(tid);
+        chatAddBubble('error', '⚠️ Erreur de connexion au serveur.');
       }
     };
   }
 
+
   let chatN = 0;
-  function addBubble(type, text) {
+  function chatAddBubble(type, html) {
     const msgs = $('#chat-widget-messages');
     if (!msgs) return;
     const id  = 'cb' + chatN++;
     const div = document.createElement('div');
     div.id    = id;
-    div.className = `chat-msg ${type === 'user' ? 'user' : 'assistant'}`;
-    div.innerHTML = `<div class="chat-bubble">${type === 'typing' ? '<span style="opacity:.5">…</span>' : esc(text).replace(/\n/g,'<br>')}</div>`;
+    div.className = `chat-msg ${type === 'user' ? 'user' : type === 'error' ? 'assistant error' : 'assistant'}`;
+    div.innerHTML = `<div class="chat-bubble">${type === 'user' ? esc(html) : html}</div>`;
     msgs.appendChild(div);
     msgs.scrollTop = msgs.scrollHeight;
     return id;
   }
+
+  function chatAddTyping() {
+    const msgs = $('#chat-widget-messages');
+    if (!msgs) return;
+    const id  = 'cb' + chatN++;
+    const div = document.createElement('div');
+    div.id    = id;
+    div.className = 'chat-msg assistant';
+    div.innerHTML = `<div class="chat-bubble chat-typing"><span></span><span></span><span></span></div>`;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return id;
+  }
+
+  function chatRemove(id) {
+    document.getElementById(id)?.remove();
+  }
+
+  function chatAddSources(sources) {
+    const msgs = $('#chat-widget-messages');
+    if (!msgs || !sources.length) return;
+    const id  = 'cb' + chatN++;
+    const div = document.createElement('div');
+    div.id    = id;
+    div.className = 'chat-msg assistant';
+    const cards = sources.map(s => `
+      <div class="chat-source-card" data-url="${esc(s.url || '')}">
+        <div class="chat-source-code">${esc(s.code || '')}</div>
+        <div class="chat-source-title">${esc(s.titre || '')}</div>
+        <div class="chat-source-meta">
+          <span class="chat-source-domain">${esc(s.domaine || '')}</span>
+          ${s.pertinence != null ? `<span class="chat-source-score">${s.pertinence}%</span>` : ''}
+        </div>
+      </div>
+    `).join('');
+    div.innerHTML = `<div class="chat-sources-wrap">${cards}</div>`;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    // Click to open drawer
+    div.querySelectorAll('.chat-source-card[data-url]').forEach(card => {
+      if (card.dataset.url) {
+        card.style.cursor = 'pointer';
+        card.onclick = () => {
+          $('#chat-widget-window')?.classList.remove('open');
+          openDrawer(card.dataset.url);
+        };
+      }
+    });
+  }
+
+  // Legacy addBubble alias (backward compat)
+  function addBubble(type, text) { return chatAddBubble(type, text); }
+
 
   // ─── Toast ─────────────────────────────────────────────────────────
   function showToast(msg, type = 'success') {

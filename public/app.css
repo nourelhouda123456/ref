@@ -419,25 +419,180 @@ img{max-width:100%}
 .section-head h2{font-size:clamp(22px,3vw,30px);font-weight:800;letter-spacing:-.3px}
 .section-head p{color:var(--text-muted);margin-top:10px;font-size:15px}
 
-.skills-cloud{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.skills-cloud{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:1050px;margin:0 auto}
 .skill-pill{
-  display:inline-flex;align-items:center;gap:6px;
-  background:#fff;color:var(--text);border:1px solid var(--border);
+  display:inline-flex;align-items:center;gap:8px;
+  background:#fff;color:var(--text);border:1.5px solid var(--border);
   border-radius:var(--r-full);padding:9px 18px;
-  font-size:13px;font-weight:500;cursor:pointer;
-  transition:var(--t);box-shadow:var(--sh-xs);
+  font-size:13.5px;font-weight:600;cursor:pointer;
+  transition:all .2s var(--ease);box-shadow:var(--sh-xs);
 }
-.skill-pill:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light);transform:translateY(-2px);box-shadow:var(--sh-sm)}
+.skill-pill:hover{
+  border-color:var(--primary);color:var(--primary);
+  background:var(--primary-light);transform:translateY(-2px);
+  box-shadow:var(--sh-sm);
+}
+.skill-pill.active{
+  background:var(--primary);color:#fff;border-color:var(--primary);
+  box-shadow:0 4px 14px rgba(37,99,235,.35);
+  transform:translateY(-1px);
+}
+.skill-pill .sp-icon{
+  color:#f59e0b;
+}
+.skill-pill.active .sp-icon{
+  color:#fef08a;
+}
+.skill-pill .sp-count{
+  font-size:11px;font-weight:700;
+  background:var(--bg);color:var(--text-muted);
+  padding:2px 8px;border-radius:var(--r-full);
+  border:1px solid var(--border-light);
+  transition:all .2s var(--ease);
+}
+.skill-pill:hover .sp-count{
+  background:#dbeafe;color:var(--primary);border-color:#bfdbfe;
+}
+.skill-pill.active .sp-count{
+  background:rgba(255,255,255,.25);color:#fff;border-color:transparent;
+}
 
-/* ── DEMO ────────────────────────────────────────────────────── */
+/* ── DEMO CARD ────────────────────────────────────────────────── */
 .demo-card{
   background:#fff;
   border-radius:var(--r-xl);
-  border:1px solid var(--border);
-  box-shadow:var(--sh-md);
+  border:1.5px solid var(--border);
+  box-shadow:0 12px 36px -8px rgba(15,23,42,.08), 0 4px 12px rgba(15,23,42,.04);
   overflow:hidden;
-  padding:32px;
+  padding:36px;
 }
+
+/* ── DEMO CARD — top header ───────────────────────────── */
+.demo-top-header{
+  margin-bottom:28px;
+  padding-bottom:20px;
+  border-bottom:1.5px solid var(--border-light);
+}
+.demo-top-meta{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+.demo-sector-badge{
+  font-size:12.5px;
+  font-weight:600;
+  color:#334155;
+  background:#f1f5f9;
+  padding:4px 12px;
+  border-radius:var(--r-full);
+  border:1px solid #e2e8f0;
+}
+.demo-title{
+  font-size:24px;
+  font-weight:800;
+  line-height:1.25;
+  color:var(--text);
+  margin:0 0 8px;
+  letter-spacing:-.4px;
+}
+.demo-desc{
+  font-size:14px;
+  line-height:1.7;
+  color:var(--text-muted);
+  margin:0;
+}
+
+/* ── Center layout: radar left, skills right ─────────── */
+.demo-center-layout{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:32px;
+  align-items:start;
+  margin-bottom:28px;
+}
+
+/* Radar panel (left) */
+.demo-radar-panel{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  background:linear-gradient(145deg,#f8fafc,#f1f5f9);
+  border:1.5px solid #e2e8f0;
+  border-radius:20px;
+  padding:20px 18px;
+  box-shadow:0 4px 16px rgba(15,23,42,.04);
+  min-width:300px;
+}
+.demo-radar-label{
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.7px;
+  color:#64748b;
+  margin-bottom:10px;
+}
+.demo-radar-svg-wrap svg{
+  width:300px;
+  height:300px;
+  display:block;
+  overflow:visible;
+}
+
+/* Skills panel (right) */
+.demo-skills-panel{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+.demo-skill-group{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.demo-skill-group-title{
+  font-size:11.5px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.6px;
+  padding:4px 0 4px 10px;
+  border-left:3px solid;
+}
+.demo-chips-wrap{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+/* Footer bar: salary + button */
+.demo-footer-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  flex-wrap:wrap;
+  padding-top:20px;
+  border-top:1.5px solid var(--border-light);
+}
+
+@media(max-width:860px){
+  .demo-center-layout{
+    grid-template-columns:1fr;
+  }
+  .demo-radar-panel{
+    min-width:unset;
+    width:100%;
+  }
+  .demo-radar-svg-wrap svg{
+    width:100%;
+    height:auto;
+  }
+  .demo-card{
+    padding:22px;
+  }
+}
+
 
 /* Code badge dans la démo */
 .demo-card .job-card-code{
@@ -449,25 +604,6 @@ img{max-width:100%}
   padding:5px 12px;
   border-radius:var(--r-full);
   display:inline-block;
-  margin-bottom:12px;
-}
-
-/* Titre du métier */
-.demo-card h3{
-  font-size:28px;
-  font-weight:800;
-  line-height:1.2;
-  color:var(--text);
-  margin-bottom:16px;
-  letter-spacing:-.5px;
-}
-
-/* Description */
-.demo-card p{
-  font-size:15px;
-  line-height:1.75;
-  color:var(--text-muted);
-  margin-bottom:20px;
 }
 
 /* Amélioration des skill-chips dans la démo */
@@ -566,7 +702,7 @@ img{max-width:100%}
 
 /* Bouton "Voir la fiche complète" */
 .demo-card .btn-primary{
-  background:var(--primary);
+  background:linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color:#fff;
   padding:14px 32px;
   border-radius:var(--r-lg);
@@ -582,27 +718,13 @@ img{max-width:100%}
 }
 
 .demo-card .btn-primary:hover{
-  background:var(--primary-dark);
+  background:linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
   transform:translateY(-2px);
   box-shadow:0 6px 20px rgba(37,99,235,.35);
 }
 
-.demo-card-body{
-  padding:0;
-  display:grid;
-  grid-template-columns:1fr auto;
-  gap:40px;
-  align-items:start;
-}
 
-@media(max-width:640px){
-  .demo-card-body{
-    grid-template-columns:1fr;
-  }
-  .demo-card{
-    padding:24px;
-  }
-}
+
 
 /* ── CTA BAND ────────────────────────────────────────────────── */
 .cta-band{
@@ -1274,7 +1396,13 @@ img{max-width:100%}
   flex-shrink:0;
 }
 .chat-header span{font-size:14px;font-weight:700}
-.chat-header button{background:none;border:none;color:rgba(255,255,255,.65);font-size:18px;cursor:pointer;line-height:1}
+.chat-header-info{display:flex;align-items:center;gap:8px;}
+.chat-header-icon{font-size:18px;}
+.chat-header-title{font-weight:700;font-size:15px;}
+.chat-header-sub{font-size:12px;opacity:0.85;}
+.chat-close-btn{background:none;border:none;color:rgba(255,255,255,.7);font-size:18px;cursor:pointer;}
+.chat-close-btn:hover{color:#fff;}
+
 .chat-header button:hover{color:#fff}
 .chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
 .chat-msg{display:flex}
@@ -1300,6 +1428,30 @@ img{max-width:100%}
   border:none;cursor:pointer;display:grid;place-items:center;transition:var(--t);
 }
 .chat-input-row button:hover{background:var(--primary-dark)}
+
+/* Chat tabs */
+.chat-tabs{display:flex;border-bottom:1px solid var(--border-light);background:var(--bg)}
+.chat-tab{flex:1;padding:8px 12px;background:none;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:var(--t);color:var(--text-muted)}
+.chat-tab:hover{background:var(--bg-light)}
+.chat-tab.active{color:var(--primary);border-bottom:2px solid var(--primary)}
+
+/* Chat source cards */
+.chat-sources-wrap{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.chat-source-card{background:var(--bg-light);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;display:flex;flex-direction:column;gap:4px;transition:var(--t)}
+.chat-source-card:hover{background:var(--bg);box-shadow:0 2px 6px rgba(0,0,0,.05)}
+.chat-source-code{font-size:11px;font-weight:700;color:var(--primary)}
+.chat-source-title{font-size:13px;font-weight:600;color:var(--text)}
+.chat-source-meta{font-size:12px;color:var(--text-muted);display:flex;gap:8px;align-items:center}
+.chat-source-domain{background:var(--primary-light);color:var(--primary);padding:2px 6px;border-radius:var(--r-full);font-size:11px}
+.chat-source-score{background:var(--secondary-light);color:var(--secondary);padding:2px 6px;border-radius:var(--r-full);font-size:11px}
+
+/* Typing animation */
+.chat-typing span{display:inline-block;width:6px;height:6px;background:rgba(255,255,255,.6);border-radius:50%;margin-right:4px;animation:chat-typing 1s infinite ease-in-out alternate}
+@keyframes chat-typing{from{opacity:.4}to{opacity:1}}
+
+/* Error bubble */
+.chat-msg.assistant.error .chat-bubble{background:#fee2e2;color:#991b1b}
+
 
 /* ── RESPONSIVE ──────────────────────────────────────────────── */
 @media(max-width:768px){

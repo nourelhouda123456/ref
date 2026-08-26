@@ -103,12 +103,28 @@ function answerFromMetier(question, metier) {
   if (/formation|diplome|acced|acces|devenir|etud/.test(q)) return metier.accesEmploi || metier.definition;
   if (/secteur|ou travailler|entreprise|environnement/.test(q)) return (metier.environnementSecteurs || []).join('; ') || metier.definition;
   if (/numerique|informatique/.test(q) && (metier.competencesNumeriques || []).length) return metier.competencesNumeriques.join('; ');
+  // Gestion du salaire
+  if (/salaire|remuneration|rémunération|pay|earn/.test(q)) {
+    if (!metier.salary) return `Aucune donnée de salaire n’est disponible pour ${metier.titre}.`;
+    
+    // Si le salaire est un objet structuré (min, max, avg, currency, period)
+    if (typeof metier.salary === 'object' && metier.salary.salaryAvg) {
+      return `Le salaire moyen de ${metier.titre} est d'environ ${metier.salary.salaryAvg} ${metier.salary.currency} / ${metier.salary.period} (fourchette : ${metier.salary.salaryMin} - ${metier.salary.salaryMax} ${metier.salary.currency}).`;
+    }
+    
+    // Si le salaire est une simple chaîne
+    return `Le salaire moyen de ${metier.titre} est ${metier.salary}.`;
+  }
   return metier.definition || metier.resume;
 }
 
 async function ask(question) {
+  // Simple greeting handling – if the user just says hello, respond with the welcome message.
+  if (/^\s*(bonjour|salut|bonsoir|hello|hi)\b/i.test(question)) {
+    return { answer: '👋 Bonjour ! Posez-moi une question sur les métiers, les compétences, les formations…', sources: [], mode: 'lexical' };
+  }
+
   const results = await search(question, 3);
-  if (!results.length) return { answer: 'Aucune fiche RTMC suffisamment pertinente n’a été trouvée.', sources: [], mode: 'lexical' };
   const best = results[0].metier;
   return {
     answer: answerFromMetier(question, best),
@@ -116,6 +132,7 @@ async function ask(question) {
     mode: process.env.VOYAGE_API_KEY && embeddings.length ? 'semantic' : 'lexical',
   };
 }
+
 
 async function recommend(cvText, limit = 5) {
   const results = await search(cvText, limit);
