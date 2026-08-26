@@ -431,18 +431,178 @@ img{max-width:100%}
 
 /* ── DEMO ────────────────────────────────────────────────────── */
 .demo-card{
-  background:#fff;border-radius:var(--r-xl);
-  border:1px solid var(--border);box-shadow:var(--sh-md);
+  background:#fff;
+  border-radius:var(--r-xl);
+  border:1px solid var(--border);
+  box-shadow:var(--sh-md);
   overflow:hidden;
+  padding:32px;
 }
-.demo-card-header{
-  padding:24px 28px;
-  background:linear-gradient(135deg,#1e3a8a,#2563eb);
+
+/* Code badge dans la démo */
+.demo-card .job-card-code{
+  background:var(--primary-light);
+  color:var(--primary);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.8px;
+  padding:5px 12px;
+  border-radius:var(--r-full);
+  display:inline-block;
+  margin-bottom:12px;
+}
+
+/* Titre du métier */
+.demo-card h3{
+  font-size:28px;
+  font-weight:800;
+  line-height:1.2;
+  color:var(--text);
+  margin-bottom:16px;
+  letter-spacing:-.5px;
+}
+
+/* Description */
+.demo-card p{
+  font-size:15px;
+  line-height:1.75;
+  color:var(--text-muted);
+  margin-bottom:20px;
+}
+
+/* Amélioration des skill-chips dans la démo */
+.demo-card .skill-chip{
+  font-size:13px;
+  font-weight:600;
+  padding:8px 16px;
+  border-radius:var(--r-full);
+  border:1.5px solid;
+  transition:all .2s var(--ease);
+  cursor:default;
+  line-height:1.3;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+
+/* Savoir-faire techniques (bleu) */
+.demo-card .skill-chip.sf{
+  color:#1d4ed8;
+  background:linear-gradient(135deg,#dbeafe,#eff6ff);
+  border-color:#93c5fd;
+}
+.demo-card .skill-chip.sf:hover{
+  background:linear-gradient(135deg,#bfdbfe,#dbeafe);
+  transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(29,78,216,.2);
+}
+
+/* Savoirs (violet) */
+.demo-card .skill-chip.sv{
+  color:#7c3aed;
+  background:linear-gradient(135deg,#ede9fe,#f5f3ff);
+  border-color:#c4b5fd;
+}
+.demo-card .skill-chip.sv:hover{
+  background:linear-gradient(135deg,#ddd6fe,#ede9fe);
+  transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(124,58,237,.2);
+}
+
+/* Soft skills (vert) */
+.demo-card .skill-chip.ss{
+  color:#065f46;
+  background:linear-gradient(135deg,#d1fae5,#ecfdf5);
+  border-color:#6ee7b7;
+}
+.demo-card .skill-chip.ss:hover{
+  background:linear-gradient(135deg,#a7f3d0,#d1fae5);
+  transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(6,95,70,.2);
+}
+
+/* Numérique (orange) */
+.demo-card .skill-chip.sn{
+  color:#92400e;
+  background:linear-gradient(135deg,#fef3c7,#fef9c3);
+  border-color:#fcd34d;
+}
+.demo-card .skill-chip.sn:hover{
+  background:linear-gradient(135deg,#fde68a,#fef3c7);
+  transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(146,64,14,.2);
+}
+
+/* Bloc salaire dans la démo */
+.demo-card .drawer-salary-block{
+  background:linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%);
+  border:1.5px solid #a7f3d0;
+  border-radius:var(--r-lg);
+  padding:18px 22px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  box-shadow:0 2px 8px rgba(6,95,70,.1);
+}
+
+.demo-card .drawer-salary-icon{
+  font-size:28px;
+  filter:drop-shadow(0 2px 4px rgba(6,95,70,.15));
+}
+
+.demo-card .drawer-salary-val{
+  font-size:18px;
+  font-weight:800;
+  color:#065f46;
+  letter-spacing:-.3px;
+}
+
+.demo-card .drawer-salary-note{
+  font-size:12px;
+  color:#059669;
+  margin-top:4px;
+  font-weight:500;
+}
+
+/* Bouton "Voir la fiche complète" */
+.demo-card .btn-primary{
+  background:var(--primary);
   color:#fff;
+  padding:14px 32px;
+  border-radius:var(--r-lg);
+  font-size:15px;
+  font-weight:700;
+  border:none;
+  cursor:pointer;
+  transition:all .2s var(--ease);
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  box-shadow:0 4px 12px rgba(37,99,235,.25);
 }
-.demo-card-header .job-card-code{background:rgba(255,255,255,.2);color:#fff}
-.demo-card-body{padding:28px;display:grid;grid-template-columns:1fr auto;gap:32px;align-items:start}
-@media(max-width:640px){.demo-card-body{grid-template-columns:1fr}}
+
+.demo-card .btn-primary:hover{
+  background:var(--primary-dark);
+  transform:translateY(-2px);
+  box-shadow:0 6px 20px rgba(37,99,235,.35);
+}
+
+.demo-card-body{
+  padding:0;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:40px;
+  align-items:start;
+}
+
+@media(max-width:640px){
+  .demo-card-body{
+    grid-template-columns:1fr;
+  }
+  .demo-card{
+    padding:24px;
+  }
+}
 
 /* ── CTA BAND ────────────────────────────────────────────────── */
 .cta-band{
