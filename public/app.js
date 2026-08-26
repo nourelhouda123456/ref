@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ─── Compact SVG Radar ─────────────────────────────────────────────
-  function compactRadar(item, size = 140) {
+  function compactRadar(item, size = 140, isLarge = false) {
     const cats = [
       { key: 'competencesTechniquesSavoirFaire', label: 'Savoir-faire', color: '#1a4fba' },
       { key: 'competencesTechniquesSavoir',      label: 'Savoirs',      color: '#7c3aed' },
@@ -138,23 +138,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const maxC   = Math.max(...counts, 1);
     const N      = cats.length;
     const cx = size / 2, cy = size / 2;
-    const maxR = size * 0.36;
+    const maxR = isLarge ? size * 0.28 : size * 0.36;
 
     // Build grid rings
     let rings = '';
+    const strokeW = isLarge ? 1.5 : 1;
     [0.33, 0.66, 1].forEach(f => {
       const pts = cats.map((_, i) => {
         const a = (i / N) * 2 * Math.PI - Math.PI / 2;
         return `${cx + maxR * f * Math.cos(a)},${cy + maxR * f * Math.sin(a)}`;
       }).join(' ');
-      rings += `<polygon points="${pts}" fill="none" stroke="#e2e8f0" stroke-width="1"/>`;
+      rings += `<polygon points="${pts}" fill="none" stroke="#e2e8f0" stroke-width="${strokeW}"/>`;
     });
 
     // Build axes
     let axes = '';
     cats.forEach((_, i) => {
       const a = (i / N) * 2 * Math.PI - Math.PI / 2;
-      axes += `<line x1="${cx}" y1="${cy}" x2="${cx + maxR * Math.cos(a)}" y2="${cy + maxR * Math.sin(a)}" stroke="#e2e8f0" stroke-width="1"/>`;
+      axes += `<line x1="${cx}" y1="${cy}" x2="${cx + maxR * Math.cos(a)}" y2="${cy + maxR * Math.sin(a)}" stroke="#e2e8f0" stroke-width="${strokeW}"/>`;
     });
 
     // Build data polygon
@@ -166,28 +167,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Labels
     let labels = '';
+    const labelFontSize = isLarge ? 11 : 7.5;
+    const labelOffset = isLarge ? 18 : 14;
     cats.forEach((c, i) => {
       const a  = (i / N) * 2 * Math.PI - Math.PI / 2;
-      const r  = maxR + 14;
+      const r  = maxR + labelOffset;
       const lx = cx + r * Math.cos(a);
       const ly = cy + r * Math.sin(a);
       const anchor = Math.cos(a) > 0.1 ? 'start' : Math.cos(a) < -0.1 ? 'end' : 'middle';
+      
+      let dy = '';
+      if (anchor === 'middle') {
+        dy = a < 0 ? 'dy="-4"' : 'dy="10"';
+      } else {
+        dy = 'dy="3"';
+      }
+
       // First real skill as label, else category name
       const skill = (item[c.key] || [])[0];
-      const txt   = skill ? skill.slice(0, 18) + (skill.length > 18 ? '…' : '') : c.label;
-      labels += `<text x="${lx}" y="${ly}" text-anchor="${anchor}" font-size="7.5" fill="#64748b">${esc(txt)}</text>`;
+      const maxLen = isLarge ? 30 : 18;
+      const txt   = skill ? skill.slice(0, maxLen) + (skill.length > maxLen ? '…' : '') : c.label;
+      labels += `<text x="${lx}" y="${ly}" ${dy} text-anchor="${anchor}" font-size="${labelFontSize}" font-weight="${isLarge ? '500' : 'normal'}" fill="#475569">${esc(txt)}</text>`;
     });
 
     // Dot points on polygon
+    const dotR = isLarge ? 4 : 3;
     const dots = counts.map((v, i) => {
       const r = (v / maxC) * maxR;
       const a = (i / N) * 2 * Math.PI - Math.PI / 2;
-      return `<circle cx="${cx + r * Math.cos(a)}" cy="${cy + r * Math.sin(a)}" r="3" fill="#1a4fba" stroke="#fff" stroke-width="1.5"/>`;
+      return `<circle cx="${cx + r * Math.cos(a)}" cy="${cy + r * Math.sin(a)}" r="${dotR}" fill="#1a4fba" stroke="#fff" stroke-width="1.5"/>`;
     }).join('');
 
-    return `<svg viewBox="0 0 ${size} ${size}" class="compact-radar-svg" aria-hidden="true" overflow="visible">
+    const strokePolyW = isLarge ? 2.5 : 1.5;
+    const className = isLarge ? 'large-radar-svg' : 'compact-radar-svg';
+    return `<svg viewBox="0 0 ${size} ${size}" class="${className}" aria-hidden="true" overflow="visible">
       ${rings}${axes}
-      <polygon points="${pts}" fill="rgba(26,79,186,0.18)" stroke="#1a4fba" stroke-width="1.5" stroke-linejoin="round"/>
+      <polygon points="${pts}" fill="rgba(26,79,186,0.18)" stroke="#1a4fba" stroke-width="${strokePolyW}" stroke-linejoin="round"/>
       ${dots}
       ${labels}
     </svg>`;
@@ -197,8 +212,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function fullRadar(item, containerId) {
     const container = $('#' + containerId);
     if (!container) return;
-    const size = 200;
-    container.innerHTML = compactRadar(item, size).replace('class="compact-radar-svg"', 'class="large-radar-svg"');
+    const size = 380;
+    container.innerHTML = compactRadar(item, size, true);
   }
 
   // ─── Scroll to results ─────────────────────────────────────────────
