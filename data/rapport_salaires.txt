@@ -1,0 +1,130 @@
+═══════════════════════════════════════════════════════════════
+  RAPPORT D'ESTIMATION SALARIALE - MÉTIERS RTMC
+═══════════════════════════════════════════════════════════════
+Date de génération : 26/08/2026 8:47:12 AM
+Nombre total de métiers : 530
+
+───────────────────────────────────────────────────────────────
+1. RÉPARTITION PAR CATÉGORIE PROFESSIONNELLE
+───────────────────────────────────────────────────────────────
+
+OUVRIER              : 264 métiers ( 49.8%)
+  Salaire moyen estimé : 994 TND/mois
+
+CADRE                : 173 métiers ( 32.6%)
+  Salaire moyen estimé : 2660 TND/mois
+
+INTERMEDIAIRE        :  67 métiers ( 12.6%)
+  Salaire moyen estimé : 1822 TND/mois
+
+EMPLOYE              :  26 métiers (  4.9%)
+  Salaire moyen estimé : 1390 TND/mois
+
+───────────────────────────────────────────────────────────────
+2. RÉPARTITION PAR SECTEUR D'ACTIVITÉ
+───────────────────────────────────────────────────────────────
+
+FINANCE              :  32 métiers (  6.0%)
+  Salaire moyen estimé : 2598 TND/mois
+
+TIC                  :  82 métiers ( 15.5%)
+  Salaire moyen estimé : 2148 TND/mois
+
+IMMOBILIER           :  15 métiers (  2.8%)
+  Salaire moyen estimé : 1703 TND/mois
+
+COMMERCE             :  62 métiers ( 11.7%)
+  Salaire moyen estimé : 1627 TND/mois
+
+ENSEIGNEMENT         :  31 métiers (  5.8%)
+  Salaire moyen estimé : 1584 TND/mois
+
+INDUSTRIE            : 149 métiers ( 28.1%)
+  Salaire moyen estimé : 1581 TND/mois
+
+CONSTRUCTION         :  54 métiers ( 10.2%)
+  Salaire moyen estimé : 1502 TND/mois
+
+EXTRACTIF            :   5 métiers (  0.9%)
+  Salaire moyen estimé : 1437 TND/mois
+
+TRANSPORT            :  36 métiers (  6.8%)
+  Salaire moyen estimé : 1367 TND/mois
+
+HOTELLERIE           :  33 métiers (  6.2%)
+  Salaire moyen estimé : 1225 TND/mois
+
+ENERGIE              :   5 métiers (  0.9%)
+  Salaire moyen estimé : 1185 TND/mois
+
+AGRICULTURE          :  26 métiers (  4.9%)
+  Salaire moyen estimé : 1022 TND/mois
+
+───────────────────────────────────────────────────────────────
+3. TOP 10 MÉTIERS LES MIEUX RÉMUNÉRÉS
+───────────────────────────────────────────────────────────────
+
+ 1. Consultant en organisation et magnagement d'entreprise
+    Code: M1402 | 2310-6278 TND/mois
+    Catégorie: cadre | Secteur: finance
+
+ 2. Responsable RSE
+    Code: M1803 | 2310-6278 TND/mois
+    Catégorie: cadre | Secteur: finance
+
+ 3. Actuaire
+    Code: C1105 | 2120-5898 TND/mois
+    Catégorie: cadre | Secteur: finance
+
+ 4. Directeur comptable
+    Code: M1206 | 2095-5848 TND/mois
+    Catégorie: cadre | Secteur: finance
+
+ 5. Auditeur comptable et financier
+    Code: M1202 | 2085-5828 TND/mois
+    Catégorie: cadre | Secteur: finance
+
+ 6. Gestionnaire de Règlement de Sinistre
+    Code: C1107 | 2050-5758 TND/mois
+    Catégorie: cadre | Secteur: finance
+
+ 7. Chercheur en Sciences de l'Univers, de la Matière et du Vivant
+    Code: K2402 | 2072-5725 TND/mois
+    Catégorie: cadre | Secteur: tic
+
+ 8. Ingénieur de bureau d'études en industrie
+    Code: H1206 | 2032-5645 TND/mois
+    Catégorie: cadre | Secteur: tic
+
+ 9. Juriste
+    Code: K1903 | 1930-5318 TND/mois
+    Catégorie: cadre | Secteur: finance
+
+10. Responsable qualité
+    Code: M1802 | 1951-5313 TND/mois
+    Catégorie: cadre | Secteur: tic
+
+───────────────────────────────────────────────────────────────
+4. MÉTHODOLOGIE
+───────────────────────────────────────────────────────────────
+
+Les estimations salariales sont calculées selon les critères suivants :
+
+• Catégorie professionnelle (cadre, intermédiaire, employé, ouvrier)
+  basée sur les données INS 2022
+
+• Secteur d'activité avec multiplicateurs spécifiques
+  (finance: +35%, TIC: +15%, agriculture: -22%, etc.)
+
+• Niveau de formation requis
+  (doctorat: +40%, master/ingénieur: +25%, licence: +10%, etc.)
+
+• Bonus de compétences spécialisées
+  (management: +200 TND, expertise: +180 TND, langues: +120 TND, etc.)
+
+• Nombre total de compétences requises
+  (>25 compétences: +150 TND, >15 compétences: +80 TND)
+
+───────────────────────────────────────────────────────────────
+SOURCES : INS 2022, Paylab.com, Managers.tn, La Tribune
+═══════════════════════════════════════════════════════════════

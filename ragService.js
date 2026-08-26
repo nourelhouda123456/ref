@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 const DATA_DIR = path.join(__dirname, 'data');
-const METIERS_FILE = path.join(DATA_DIR, 'metiers_clean.json');
+const METIERS_FILE = path.join(DATA_DIR, 'metiers_with_salaries.json');
 const EMBEDDINGS_FILE = path.join(DATA_DIR, 'metiers_embeddings.json');
 const VOYAGE_API_URL = 'https://api.voyageai.com/v1/embeddings';
 const VOYAGE_MODEL = 'voyage-4-lite';
@@ -89,6 +89,7 @@ function reference(metier, score) {
     domaine: metier.domaineGrand,
     url: metier.url,
     pertinence: Math.max(0, Math.min(100, Math.round(score * 100))),
+    salary: metier.salary || null,
   };
 }
 

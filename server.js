@@ -44,6 +44,20 @@ http.createServer(async (req, res) => {
       if (url.pathname === '/api/chat') return json(res, 200, await ask(body.question));
       if (url.pathname === '/api/recommendations') return json(res, 200, await recommend(body.cvText || body.profileText, Math.min(Number(body.limit) || 5, 20)));
       if (url.pathname === '/api/metiers') return json(res, 200, metiers);
+      if (url.pathname === '/api/metiers/search') {
+        const code = body.code || url.searchParams.get('code');
+        const titre = body.titre || url.searchParams.get('titre');
+        if (code) {
+          const metier = metiers.find(m => m.code === code.toUpperCase());
+          return json(res, metier ? 200 : 404, metier || { error: 'Métier introuvable.' });
+        }
+        if (titre) {
+          const normalizedTitre = titre.toLowerCase();
+          const found = metiers.filter(m => m.titre.toLowerCase().includes(normalizedTitre));
+          return json(res, 200, found);
+        }
+        return json(res, 400, { error: 'Paramètre code ou titre requis.' });
+      }
       if (url.pathname === '/api/metiers/similar') {
         const queryUrl = body.url || url.searchParams.get('url');
         const limit = Math.min(Number(body.limit || url.searchParams.get('limit')) || 5, 10);

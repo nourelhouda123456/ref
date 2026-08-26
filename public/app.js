@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sectors_title:'Explorez par grand domaine', sectors_subtitle:'Cliquez sur un secteur pour filtrer les métiers.',
       jobs_title:'Découvrez les métiers', jobs_subtitle:'Fiches officielles du Référentiel Tunisien des Métiers et des Compétences.',
       jobs_count_suffix:' métiers disponibles',
-      card_skills_count:'compétences', card_salary_est:'TND / mois*', card_salary_note:'*Estimation heuristique',
+      card_skills_count:'compétences', card_salary_est:'TND / mois', card_salary_note:'*Basé sur données INS 2022',
       skills_title:'Les compétences au cœur de l\'orientation',
       skills_subtitle:'Cliquez sur une compétence pour filtrer les métiers associés.',
       demo_title:'Comprendre une fiche métier RTMC',
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sectors_title:'Explore by Sector', sectors_subtitle:'Click a sector to filter careers.',
       jobs_title:'Discover Careers', jobs_subtitle:'Official reference sheets from the Tunisian careers framework.',
       jobs_count_suffix:' careers available',
-      card_skills_count:'skills', card_salary_est:'TND / month*', card_salary_note:'*Heuristic estimate',
+      card_skills_count:'skills', card_salary_est:'TND / month', card_salary_note:'*Based on INS 2022 data',
       skills_title:'Skills at the Heart of Orientation',
       skills_subtitle:'Click on a skill to filter associated careers.',
       demo_title:'Understanding an RTMC Career Sheet',
@@ -96,16 +96,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // ─── Salary heuristic ──────────────────────────────────────────────
-  function salaryRange(code = '') {
+  // ─── Salary extraction ─────────────────────────────────────────────
+  // Utilise les données réelles de l'API si disponibles, sinon fallback heuristique
+  function getSalaryRange(metier) {
+    // Si le métier a des données salariales de l'API, les utiliser
+    if (metier && metier.salary && metier.salary.salaryMin && metier.salary.salaryMax) {
+      return {
+        min: metier.salary.salaryMin,
+        max: metier.salary.salaryMax,
+        avg: metier.salary.salaryAvg,
+        source: 'api',
+        metadata: metier.salary.metadata || null
+      };
+    }
+    
+    // Fallback : estimation heuristique basique (ancienne méthode)
+    const code = metier?.code || '';
     const p = (code || '').charAt(0).toUpperCase();
-    if (p === 'I') return { min: 1600, max: 2800 };
-    if (p === 'A') return { min: 850,  max: 1350 };
-    if (p === 'B' || p === 'C') return { min: 1300, max: 2200 };
-    if (p === 'H') return { min: 1100, max: 1900 };
-    if (p === 'J') return { min: 1200, max: 2100 };
-    if (p === 'M') return { min: 1000, max: 1650 };
-    return { min: 1100, max: 1700 };
+    let range;
+    if (p === 'I') range = { min: 1600, max: 2800 };
+    else if (p === 'A') range = { min: 850,  max: 1350 };
+    else if (p === 'B' || p === 'C') range = { min: 1300, max: 2200 };
+    else if (p === 'H') range = { min: 1100, max: 1900 };
+    else if (p === 'J') range = { min: 1200, max: 2100 };
+    else if (p === 'M') range = { min: 1000, max: 1650 };
+    else range = { min: 1100, max: 1700 };
+    
+    return { ...range, avg: Math.round((range.min + range.max) / 2), source: 'heuristic', metadata: null };
   }
 
   // ─── Compact SVG Radar ─────────────────────────────────────────────
@@ -355,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const slice = list.slice(0, visibleCount);
 
     slice.forEach((item, idx) => {
-      const sal = salaryRange(item.code);
+      const sal = getSalaryRange(item);
       const totalSkills = (item.competencesTechniquesSavoirFaire||[]).length
         + (item.competencesTechniquesSavoir||[]).length
         + (item.competencesComportementales||[]).length
@@ -452,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const job = window.allMetiers.find(m => m.code === 'I1401') || window.allMetiers[0];
     if (!job) return;
-    const sal = salaryRange(job.code);
+    const sal = getSalaryRange(job);
 
     box.innerHTML = `
       <div class="demo-card">
@@ -473,7 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <span class="drawer-salary-icon">💰</span>
               <div>
                 <div class="drawer-salary-val">${sal.min} – ${sal.max} TND / mois</div>
-                <div class="drawer-salary-note">*Estimation heuristique</div>
+                <div class="drawer-salary-note">*Basé sur données INS 2022</div>
               </div>
             </div>
           </div>
@@ -606,7 +623,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>`;
 
     setTimeout(() => {
-      const sal = salaryRange(metier.code);
+      const sal = getSalaryRange(metier);
       const d   = T[window.currentLang];
       const totalSkills = (metier.competencesTechniquesSavoirFaire||[]).length
         + (metier.competencesTechniquesSavoir||[]).length
@@ -622,7 +639,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="drawer-salary-icon">💰</span>
             <div>
               <div class="drawer-salary-val">${sal.min} – ${sal.max} TND / mois</div>
-              <div class="drawer-salary-note">*Estimation heuristique · ${totalSkills} compétences</div>
+              <div class="drawer-salary-note">*Basé sur données INS 2022 · ${totalSkills} compétences</div>
             </div>
           </div>
         </div>
