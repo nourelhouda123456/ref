@@ -1,23 +1,35 @@
 /**
  * Moteur RAG RTMC : les réponses et recommandations restent toujours reliées
  * à une fiche officielle (code + URL RTMC). Aucun fine-tuning n'est requis.
+ *
+ * Les données sont chargées depuis MongoDB au démarrage (via init()).
  */
-const fs = require('fs');
-const path = require('path');
+const { connectDB, getMetiersCollection, getEmbeddingsCollection } = require('./db');
 
-const DATA_DIR = path.join(__dirname, 'data');
-const METIERS_FILE = path.join(DATA_DIR, 'metiers_with_salaries.json');
-const EMBEDDINGS_FILE = path.join(DATA_DIR, 'metiers_embeddings.json');
 const VOYAGE_API_URL = 'https://api.voyageai.com/v1/embeddings';
 const VOYAGE_MODEL = 'voyage-4-lite';
 
-function loadJson(file) {
-  return JSON.parse(fs.readFileSync(file, 'utf8'));
-}
+// Données chargées en mémoire depuis MongoDB (cache)
+let metiers = [];
+let metiersByUrl = new Map();
+let embeddings = [];
 
-const metiers = loadJson(METIERS_FILE);
-const metiersByUrl = new Map(metiers.map((m) => [m.url, m]));
-const embeddings = fs.existsSync(EMBEDDINGS_FILE) ? loadJson(EMBEDDINGS_FILE) : [];
+/**
+ * Initialise le service RAG : se connecte à MongoDB et charge les données en mémoire.
+ * Doit être appelé avant toute utilisation des fonctions ask/recommend/etc.
+ */
+async function init() {
+  await connectDB();
+
+  const metiersCol = getMetiersCollection();
+  metiers = await metiersCol.find({}).toArray();
+  metiersByUrl = new Map(metiers.map((m) => [m.url, m]));
+  console.log(`📚 ${metiers.length} fiches métiers chargées depuis MongoDB`);
+
+  const embeddingsCol = getEmbeddingsCollection();
+  embeddings = await embeddingsCol.find({}).toArray();
+  console.log(`🧠 ${embeddings.length} embeddings chargés depuis MongoDB`);
+}
 
 function normalize(value = '') {
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -105,7 +117,7 @@ function answerFromMetier(question, metier) {
   if (/numerique|informatique/.test(q) && (metier.competencesNumeriques || []).length) return metier.competencesNumeriques.join('; ');
   // Gestion du salaire
   if (/salaire|remuneration|rémunération|pay|earn/.test(q)) {
-    if (!metier.salary) return `Aucune donnée de salaire n’est disponible pour ${metier.titre}.`;
+    if (!metier.salary) return `Aucune donnée de salaire n'est disponible pour ${metier.titre}.`;
     
     // Si le salaire est un objet structuré (min, max, avg, currency, period)
     if (typeof metier.salary === 'object' && metier.salary.salaryAvg) {
@@ -121,10 +133,11 @@ function answerFromMetier(question, metier) {
 async function ask(question) {
   // Simple greeting handling – if the user just says hello, respond with the welcome message.
   if (/^\s*(bonjour|salut|bonsoir|hello|hi)\b/i.test(question)) {
-    return { answer: '👋 Bonjour ! Posez-moi une question sur les métiers, les compétences, les formations…', sources: [], mode: 'lexical' };
+    return { answer: '👋 Bonjour ! Posez-moi une question sur les métiers, les compétences, les formations…', sources: [], mode: 'lexical' };
   }
 
   const results = await search(question, 3);
+  if (!results.length) return { answer: 'Je n\'ai pas trouvé de fiche RTMC correspondant à votre requête. Pouvez-vous reformuler ?', sources: [], mode: 'lexical' };
   const best = results[0].metier;
   return {
     answer: answerFromMetier(question, best),
@@ -171,5 +184,4 @@ function getSimilarMetiers(url, limit = 5) {
     .map(({ metier, score }) => reference(metier, score));
 }
 
-module.exports = { ask, recommend, metiersCount: metiers.length, metiers, getSimilarMetiers };
-
+module.exports = { init, ask, recommend, metiersCount: () => metiers.length, metiers: () => metiers, getSimilarMetiers };

@@ -2,7 +2,7 @@ const http = require('http');
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { ask, recommend, metiersCount, metiers, getSimilarMetiers } = require('./ragService');
+const { init, ask, recommend, metiersCount, metiers, getSimilarMetiers } = require('./ragService');
 
 const PORT = Number(process.env.PORT || 3000);
 const MAX_BODY_BYTES = 8_000_000;
@@ -14,7 +14,7 @@ function json(res, status, body) {
 
 function sendFile(res, file, contentType) {
   fs.readFile(file, (error, data) => {
-    if (error) return json(res, 500, { error: 'Impossible de charger l’interface.' });
+    if (error) return json(res, 500, { error: 'Impossible de charger l\'interface.' });
     res.writeHead(200, { 'Content-Type': contentType });
     res.end(data);
   });
@@ -32,67 +32,76 @@ function readJson(req) {
   });
 }
 
-http.createServer(async (req, res) => {
-  const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-  if (req.method === 'OPTIONS') return json(res, 204, {});
+async function start() {
+  // Initialiser la connexion MongoDB et charger les données
+  await init();
 
-  // API Routes
-  if (url.pathname === '/health') return json(res, 200, { status: 'ok', metiers: metiersCount });
+  http.createServer(async (req, res) => {
+    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    if (req.method === 'OPTIONS') return json(res, 204, {});
 
-  if (url.pathname.startsWith('/api/')) {
-    try {
-      const body = req.method === 'POST' ? await readJson(req) : Object.fromEntries(url.searchParams);
-      if (url.pathname === '/api/chat') return json(res, 200, await ask(body.question));
-      if (url.pathname === '/api/recommendations') return json(res, 200, await recommend(body.cvText || body.profileText, Math.min(Number(body.limit) || 5, 20)));
-      if (url.pathname === '/api/metiers') return json(res, 200, metiers);
-      if (url.pathname === '/api/metiers/search') {
-        const code = body.code || url.searchParams.get('code');
-        const titre = body.titre || url.searchParams.get('titre');
-        if (code) {
-          const metier = metiers.find(m => m.code === code.toUpperCase());
-          return json(res, metier ? 200 : 404, metier || { error: 'Métier introuvable.' });
+    // API Routes
+    if (url.pathname === '/health') return json(res, 200, { status: 'ok', metiers: metiersCount() });
+
+    if (url.pathname.startsWith('/api/')) {
+      try {
+        const body = req.method === 'POST' ? await readJson(req) : Object.fromEntries(url.searchParams);
+        if (url.pathname === '/api/chat') return json(res, 200, await ask(body.question));
+        if (url.pathname === '/api/recommendations') return json(res, 200, await recommend(body.cvText || body.profileText, Math.min(Number(body.limit) || 5, 20)));
+        if (url.pathname === '/api/metiers') return json(res, 200, metiers());
+        if (url.pathname === '/api/metiers/search') {
+          const code = body.code || url.searchParams.get('code');
+          const titre = body.titre || url.searchParams.get('titre');
+          if (code) {
+            const metier = metiers().find(m => m.code === code.toUpperCase());
+            return json(res, metier ? 200 : 404, metier || { error: 'Métier introuvable.' });
+          }
+          if (titre) {
+            const normalizedTitre = titre.toLowerCase();
+            const found = metiers().filter(m => m.titre.toLowerCase().includes(normalizedTitre));
+            return json(res, 200, found);
+          }
+          return json(res, 400, { error: 'Paramètre code ou titre requis.' });
         }
-        if (titre) {
-          const normalizedTitre = titre.toLowerCase();
-          const found = metiers.filter(m => m.titre.toLowerCase().includes(normalizedTitre));
-          return json(res, 200, found);
+        if (url.pathname === '/api/metiers/similar') {
+          const queryUrl = body.url || url.searchParams.get('url');
+          const limit = Math.min(Number(body.limit || url.searchParams.get('limit')) || 5, 10);
+          return json(res, 200, getSimilarMetiers(queryUrl, limit));
         }
-        return json(res, 400, { error: 'Paramètre code ou titre requis.' });
+        return json(res, 404, { error: 'Route API introuvable.' });
+      } catch (error) {
+        return json(res, 400, { error: error.message });
       }
-      if (url.pathname === '/api/metiers/similar') {
-        const queryUrl = body.url || url.searchParams.get('url');
-        const limit = Math.min(Number(body.limit || url.searchParams.get('limit')) || 5, 10);
-        return json(res, 200, getSimilarMetiers(queryUrl, limit));
-      }
-      return json(res, 404, { error: 'Route API introuvable.' });
-    } catch (error) {
-      return json(res, 400, { error: error.message });
     }
-  }
 
-  // Generic static files serving from /public
-  const publicDir = path.join(__dirname, 'public');
-  let safePath = url.pathname === '/' ? 'index.html' : url.pathname;
-  safePath = safePath.replace(/^(\.\.[\/\\])+/, '');
-  const filePath = path.resolve(publicDir, safePath.startsWith('/') ? safePath.slice(1) : safePath);
+    // Generic static files serving from /public
+    const publicDir = path.join(__dirname, 'public');
+    let safePath = url.pathname === '/' ? 'index.html' : url.pathname;
+    safePath = safePath.replace(/^(\.\.[\\/])+/, '');
+    const filePath = path.resolve(publicDir, safePath.startsWith('/') ? safePath.slice(1) : safePath);
 
 
-  if (filePath.startsWith(publicDir) && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-    const ext = path.extname(filePath).toLowerCase();
-    const mimeTypes = {
-      '.html': 'text/html; charset=utf-8',
-      '.css': 'text/css; charset=utf-8',
-      '.js': 'application/javascript; charset=utf-8',
-      '.json': 'application/json; charset=utf-8',
-      '.png': 'image/png',
-      '.jpg': 'image/jpeg',
-      '.gif': 'image/gif',
-      '.svg': 'image/svg+xml',
-      '.ico': 'image/x-icon',
-    };
-    return sendFile(res, filePath, mimeTypes[ext] || 'application/octet-stream');
-  }
+    if (filePath.startsWith(publicDir) && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      const ext = path.extname(filePath).toLowerCase();
+      const mimeTypes = {
+        '.html': 'text/html; charset=utf-8',
+        '.css': 'text/css; charset=utf-8',
+        '.js': 'application/javascript; charset=utf-8',
+        '.json': 'application/json; charset=utf-8',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.svg': 'image/svg+xml',
+        '.ico': 'image/x-icon',
+      };
+      return sendFile(res, filePath, mimeTypes[ext] || 'application/octet-stream');
+    }
 
-  return json(res, 404, { error: 'Ressource introuvable.' });
-}).listen(PORT, () => console.log(`RTMC RAG disponible sur http://localhost:${PORT}`));
+    return json(res, 404, { error: 'Ressource introuvable.' });
+  }).listen(PORT, () => console.log(`🚀 RTMC RAG disponible sur http://localhost:${PORT}`));
+}
 
+start().catch((err) => {
+  console.error('❌ Erreur au démarrage :', err.message);
+  process.exit(1);
+});
