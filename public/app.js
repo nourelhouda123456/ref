@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeSearchQuery = '';
   let activeSkillFilter = null;
   let visibleCount      = 12;
+  let activeSourceFilter = 'all'; // 'all', 'rtmc', 'esco'
+  let activeViewMode     = 'grid'; // 'grid', 'constellation'
 
   // ─── Helpers ───────────────────────────────────────────────────────
   const $  = s => document.querySelector(s);
@@ -285,7 +287,16 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       window.allSkills = Array.from(sk).sort((a, b) => a.localeCompare(b, 'fr'));
 
+      // Count sources
+      const rtmcCount = window.allMetiers.filter(m => m.source === 'rtmc' || !m.source).length;
+      const escoCount = window.allMetiers.filter(m => m.source === 'esco').length;
+
+      if ($('#count-all')) $('#count-all').textContent = window.allMetiers.length.toLocaleString('fr-FR');
+      if ($('#count-rtmc')) $('#count-rtmc').textContent = rtmcCount.toLocaleString('fr-FR');
+      if ($('#count-esco')) $('#count-esco').textContent = escoCount.toLocaleString('fr-FR');
+
       showShimmer(false);
+      setupToolbarControls();
       renderSectorPills();
       renderGrid();
       renderSkills();
@@ -349,8 +360,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const d = T[window.currentLang];
 
-    // Filter
+    // Filter by Source
     let list = window.allMetiers;
+    if (activeSourceFilter === 'rtmc') list = list.filter(m => m.source === 'rtmc' || !m.source);
+    if (activeSourceFilter === 'esco') list = list.filter(m => m.source === 'esco');
+
     if (selectedDomain)    list = list.filter(m => m.domaineGrand === selectedDomain);
     if (activeSkillFilter) {
       const target = activeSkillFilter.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
@@ -371,8 +385,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Count bar
-    if (countEl) countEl.textContent = `${list.length} ${d.results_found || d.jobs_count_suffix}`;
-    if (clearBtn) clearBtn.style.display = (selectedDomain || activeSearchQuery || activeSkillFilter) ? 'inline-flex' : 'none';
+    if (countEl) countEl.textContent = `${list.length.toLocaleString('fr-FR')} ${d.results_found || d.jobs_count_suffix}`;
+    if (clearBtn) clearBtn.style.display = (selectedDomain || activeSearchQuery || activeSkillFilter || activeSourceFilter !== 'all') ? 'inline-flex' : 'none';
 
     if (list.length === 0) {
       grid.innerHTML = '<div class="empty-state"><p>Aucun métier ne correspond à vos critères.</p></div>';
@@ -384,9 +398,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const slice = list.slice(0, visibleCount);
 
     slice.forEach((item, idx) => {
+      const isEsco = item.source === 'esco' || (item.code && item.code.startsWith('ESCO')) || (item.url && item.url.includes('esco'));
+      const badgeText = isEsco ? '🇪🇺 ESCO' : '🇹🇳 RTMC';
+      const badgeClass = isEsco ? 'chat-badge-esco' : 'chat-badge-rtmc';
+
       const sal = getSalaryRange(item);
-      const totalSkills = (item.competencesTechniquesSavoirFaire||[]).length
-        + (item.competencesTechniquesSavoir||[]).length
+      const totalSkills = (item.competencesTechniquesSavoirFaire||item.essentialSkills||[]).length
+        + (item.competencesTechniquesSavoir||item.optionalSkills||[]).length
         + (item.competencesComportementales||[]).length
         + (item.competencesNumeriques||[]).length;
 
@@ -401,7 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="job-card-body">
           <div class="job-card-meta-top">
             <span class="job-card-code">${esc(item.code)}</span>
-            <span class="job-card-domain">${esc(item.domaineGrand)}</span>
+            <span class="chat-source-origin ${badgeClass}">${badgeText}</span>
           </div>
           <h3 class="job-card-title">${esc(item.titre)}</h3>
           <p class="job-card-desc">${esc(desc)}${desc.length >= 115 ? '…' : ''}</p>
@@ -413,7 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           <div class="job-card-chips">
             <span class="chip chip-skills">⚡ ${totalSkills} ${d.card_skills_count}</span>
-            <span class="chip chip-salary">💰 ${sal.min}–${sal.max} TND*</span>
+            <span class="chip chip-salary">${isEsco ? '🌐 Europe' : `💰 ${sal.min}–${sal.max} TND*`}</span>
           </div>
 
           <div class="job-card-actions">
@@ -1152,8 +1170,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Legacy addBubble alias (backward compat)
-  function addBubble(type, text) { return chatAddBubble(type, text); }
+  // ─── Source Filter Tabs Controls ──────────────────────────────────
+  function setupToolbarControls() {
+    // Source Filter Tabs (All, RTMC, ESCO)
+    $$('.source-tab').forEach(tab => {
+      tab.onclick = () => {
+        $$('.source-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        activeSourceFilter = tab.dataset.source;
+        visibleCount = 12;
+        renderGrid();
+      };
+    });
+  }
 
 
   // ─── Toast ─────────────────────────────────────────────────────────
