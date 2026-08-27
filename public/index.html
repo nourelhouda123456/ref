@@ -12,281 +12,32 @@
 </head>
 <body>
 
-  <!-- HEADER -->
-  <header class="header" id="main-header">
-    <div class="header-inner">
-      <a class="brand" href="/">
-        <span class="brand-logo">M</span>
-        <div class="brand-text">
-          <strong>metierRef</strong>
-          <small>Référentiel Tunisien RTMC</small>
-        </div>
-      </a>
-      <nav class="header-nav">
-        <a href="#explore-zone" class="nav-link" data-i18n="nav_home">Accueil</a>
-        <a href="#skills-section" class="nav-link" data-i18n="nav_skills">Compétences</a>
-        <a href="#mobility-section" class="nav-link" data-i18n="nav_mobility">Mobilité & Reconversion</a>
-        <a href="#about-section" class="nav-link" data-i18n="nav_about">À propos</a>
-      </nav>
-      <div class="header-actions">
-      </div>
-    </div>
-  </header>
+  <!-- HEADER / NAVBAR -->
+  <!-- include:header -->
 
-  <!-- ============================================================
-       MAIN EXPLORE ZONE : Search → Filters → Results (all in view)
-       ============================================================ -->
+  <!-- MAIN CONTENT -->
   <main>
-
-    <!-- HERO BAND -->
-    <section class="hero-band" id="explore-zone">
-      <div class="hero-content">
-        <h1 data-i18n="hero_title">Découvrez le métier qui vous correspond</h1>
-        <p data-i18n="hero_subtitle">Explorez les métiers, les compétences et les secteurs du Référentiel Tunisien.</p>
-
-        <!-- SEARCH BAR -->
-        <div class="search-wrap" id="search-wrap">
-          <form class="search-bar" id="hero-search-form" autocomplete="off">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="hero-search-input" data-i18n-placeholder="search_placeholder" placeholder="Rechercher un métier, une compétence…">
-            <button type="submit" id="btn-search" data-i18n="btn_search">Rechercher</button>
-          </form>
-          <div class="suggestions-box" id="search-suggestions"></div>
-        </div>
-
-        <!-- SECTOR PILLS (horizontal scroll) -->
-        <div class="sector-pills-wrap">
-          <div class="sector-pills" id="sector-pills">
-            <!-- Rendered via JS -->
-          </div>
-        </div>
-
-        <!-- RESULTS INFO BAR -->
-        <div class="results-bar" id="results-bar">
-          <span class="results-count" id="results-count">3 468 métiers disponibles</span>
-          <button class="btn-clear-filters" id="btn-clear-filters" style="display:none" data-i18n="btn_clear">✕ Effacer les filtres</button>
-        </div>
-      </div>
-    </section>
+    <!-- HERO BAND & SEARCH -->
+    <!-- include:hero -->
 
     <!-- RESULTS GRID -->
-    <section class="results-section" id="results-section">
-      <div class="container">
-        
-        <!-- REFERENTIAL FILTER TABS -->
-        <div class="grid-filter-header">
-          <div class="source-filter-tabs" id="source-filter-tabs">
-            <button class="source-tab active" data-source="all">🌐 Tous <span class="tab-count" id="count-all">3 468</span></button>
-            <button class="source-tab" data-source="rtmc">🇹🇳 RTMC <span class="tab-count" id="count-rtmc">530</span></button>
-            <button class="source-tab" data-source="esco">🇪🇺 ESCO <span class="tab-count" id="count-esco">2 938</span></button>
-          </div>
-        </div>
+    <!-- include:results -->
 
-        <div class="jobs-grid" id="jobs-grid">
-          <!-- shimmer placeholders rendered via JS -->
-        </div>
-        <div class="load-more-row">
-          <button class="btn-load-more" id="btn-load-more" data-i18n="load_more" style="display:none">Charger plus</button>
-        </div>
-    <!-- MOBILITY MATRIX SECTION (Transférabilité & Reconversion) -->
-    <section class="mobility-section" id="mobility-section">
-      <div class="container">
-
-        <!-- Section Header -->
-        <div class="mobility-section-header">
-          <div class="mobility-section-header-left">
-            <span class="section-badge">🌉 Mobility & Career Matrix</span>
-            <h2 class="mobility-section-title">Matrice de Transférabilité &amp; Reconversion</h2>
-            <p class="mobility-section-desc">Comparez 2 métiers (RTMC 🇹🇳 &amp; ESCO 🇪🇺), mesurez votre score d'adéquation et obtenez un plan de reconversion personnalisé.</p>
-          </div>
-          <div class="mobility-section-header-right">
-            <div class="mobility-stat-pill">🇹🇳 530 métiers RTMC</div>
-            <div class="mobility-stat-pill">🇪🇺 2 938 métiers ESCO</div>
-          </div>
-        </div>
-
-        <!-- Steps indicator -->
-        <div class="mobility-steps-row">
-          <div class="mobility-step active">
-            <span class="mobility-step-num">1</span>
-            <span class="mobility-step-label">Métier Source (A)</span>
-          </div>
-          <div class="mobility-step-line"></div>
-          <div class="mobility-step active">
-            <span class="mobility-step-num">2</span>
-            <span class="mobility-step-label">Métier Cible (B)</span>
-          </div>
-          <div class="mobility-step-line"></div>
-          <div class="mobility-step" id="mobility-step-result">
-            <span class="mobility-step-num">3</span>
-            <span class="mobility-step-label">Résultats IA</span>
-          </div>
-        </div>
-
-        <!-- Main Form Card -->
-        <div class="mobility-box">
-          <div class="mobility-form-row">
-
-            <!-- Source Job A -->
-            <div class="mobility-field-group">
-              <label for="mobility-input-source">
-                <span class="mobility-field-badge mobility-field-badge-a">A</span>
-                Métier Actuel &amp; Source
-              </label>
-              <div class="mobility-input-wrap">
-                <span class="mobility-input-icon">💼</span>
-                <input type="text" id="mobility-input-source" placeholder="Ex: Conducteur d'engins agricoles…" autocomplete="off">
-                <div class="mobility-sugg-box" id="mobility-sugg-source"></div>
-              </div>
-            </div>
-
-            <div class="mobility-arrow-icon">➔</div>
-
-            <!-- Target Job B -->
-            <div class="mobility-field-group">
-              <label for="mobility-input-target">
-                <span class="mobility-field-badge mobility-field-badge-b">B</span>
-                Métier Visé &amp; Cible
-              </label>
-              <div class="mobility-input-wrap">
-                <span class="mobility-input-icon">🎯</span>
-                <input type="text" id="mobility-input-target" placeholder="Ex: Mécanicien d'engins de chantier…" autocomplete="off">
-                <div class="mobility-sugg-box" id="mobility-sugg-target"></div>
-              </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="mobility-action-group">
-              <button class="btn-primary btn-mobility-analyze" id="btn-analyze-mobility">
-                ⚡ Analyser
-              </button>
-              <button class="btn-mobility-reset" id="btn-reset-mobility" title="Réinitialiser l'analyse">
-                ↺ Réinitialiser
-              </button>
-            </div>
-          </div>
-
-          <!-- Analysis Results Output -->
-          <div class="mobility-results-output" id="mobility-results-output" style="display:none">
-            <!-- Rendered via JS -->
-          </div>
-        </div>
-
-      </div>
-    </section>
+    <!-- MOBILITY MATRIX & RECONVERSION -->
+    <!-- include:mobility -->
 
     <!-- SKILLS CLOUD -->
-    <section class="section-alt" id="skills-section">
-      <div class="container">
-        <div class="section-head">
-          <h2 data-i18n="skills_title">Les compétences au cœur de l'orientation</h2>
-          <p data-i18n="skills_subtitle">Cliquez sur une compétence pour filtrer les métiers associés.</p>
-        </div>
-        <div class="skills-cloud" id="skills-cloud"></div>
-      </div>
-    </section>
+    <!-- include:skills -->
 
-    <!-- ABOUT / DEMO -->
-    <section class="section-white" id="about-section">
-      <div class="container">
-        <div class="section-head">
-          <h2 data-i18n="demo_title">Comprendre une fiche métier RTMC</h2>
-          <p data-i18n="demo_subtitle">Structure des informations du Référentiel Tunisien des Métiers et des Compétences.</p>
-        </div>
-        <div id="demo-sheet-box"></div>
-      </div>
-    </section>
+    <!-- ABOUT & DEMO -->
+    <!-- include:about -->
 
-    <!-- FOOTER CTA -->
-    <section class="cta-band">
-      <div class="container">
-        <h2 data-i18n="cta_footer_title">Votre prochaine opportunité commence par une découverte</h2>
-        <p data-i18n="cta_footer_text">Explorez les métiers et découvrez les compétences qui façonnent le monde professionnel.</p>
-        <a href="#explore-zone" class="btn-primary" data-i18n="btn_explore">Explorer les métiers</a>
-      </div>
-    </section>
-
+    <!-- FOOTER CTA & SITE FOOTER -->
+    <!-- include:footer -->
   </main>
 
-  <!-- FOOTER -->
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-cols">
-        <div class="footer-brand-col">
-          <div class="brand">
-            <span class="brand-logo">M</span>
-            <strong>metierRef</strong>
-          </div>
-          <p data-i18n="footer_desc">Plateforme indépendante d'exploration basée sur le RTMC.</p>
-        </div>
-        <div>
-          <h4>Navigation</h4>
-          <ul class="footer-links">
-            <li><a href="#explore-zone" data-i18n="nav_home">Accueil</a></li>
-            <li><a href="#skills-section" data-i18n="nav_skills">Compétences</a></li>
-            <li><a href="#about-section" data-i18n="nav_about">À propos</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4 data-i18n="footer_sources">Sources</h4>
-          <p style="font-size:13px;line-height:1.6;opacity:.7" data-i18n="footer_legal">Données ANETI / RTMC Tunisie.</p>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <span>© 2026 metierRef · RTMC Référentiel Tunisien</span>
-      </div>
-    </div>
-  </footer>
-
-  <!-- DRAWER -->
-  <div class="drawer-overlay" id="job-drawer" role="dialog" aria-modal="true" aria-label="Fiche métier">
-    <div class="drawer-sheet">
-      <div class="drawer-header">
-        <span class="drawer-title">Fiche Métier</span>
-        <button class="drawer-close" id="drawer-close" aria-label="Fermer">✕</button>
-      </div>
-      <div class="drawer-body" id="drawer-content"></div>
-    </div>
-  </div>
-
-  <!-- COMPARE MODAL -->
-  <div class="modal-overlay" id="compare-modal" role="dialog" aria-modal="true">
-    <div class="modal-box">
-      <div class="modal-head">
-        <div class="modal-title-wrap">
-          <span class="modal-head-icon">⚖️</span>
-          <span data-i18n="compare_modal_title">Comparateur de Métiers</span>
-        </div>
-        <button class="modal-close" id="btn-close-compare-modal" aria-label="Fermer">✕</button>
-      </div>
-      <div class="modal-body" id="comparison-content"></div>
-    </div>
-  </div>
-
-  <!-- FLOATING COMPARE BAR -->
-  <div class="compare-bar" id="compare-bar" style="display:none">
-    <span id="compare-bar-count">0 métier(s)</span>
-    <button class="btn-primary" id="btn-view-compare" data-i18n="btn_compare_label">Comparer</button>
-    <button class="btn-ghost-sm" id="btn-clear-compare">✕</button>
-  </div>
-
-  <!-- AI CHAT WIDGET -->
-  <button class="chat-fab" id="chat-widget-trigger" aria-label="Assistant IA">💬</button>
-  <div class="chat-window" id="chat-widget-window">
-    <div class="chat-header">
-      <span>Assistant IA RTMC</span>
-      <button id="chat-widget-close">✕</button>
-    </div>
-    <div class="chat-messages" id="chat-widget-messages">
-      <div class="chat-msg assistant">
-        <div class="chat-bubble">Bonjour ! Posez-moi une question sur les métiers ou les compétences.</div>
-      </div>
-    </div>
-    <form class="chat-input-row" id="chat-widget-form">
-      <input type="text" id="chat-widget-input" placeholder="Votre question…" autocomplete="off">
-      <button type="submit">↑</button>
-    </form>
-  </div>
+  <!-- MODALS & DRAWERS & CHAT WIDGET -->
+  <!-- include:modals -->
 
   <script src="/app.js"></script>
 </body>

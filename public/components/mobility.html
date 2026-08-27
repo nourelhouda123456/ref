@@ -1,0 +1,86 @@
+<!-- MOBILITY MATRIX SECTION (Transférabilité & Reconversion) COMPONENT -->
+<section class="mobility-section" id="mobility-section">
+  <div class="container">
+
+    <!-- Section Header -->
+    <div class="mobility-section-header">
+      <div class="mobility-section-header-left">
+        <span class="section-badge">🌉 Mobility & Career Matrix</span>
+        <h2 class="mobility-section-title">Matrice de Transférabilité &amp; Reconversion</h2>
+        <p class="mobility-section-desc">Comparez 2 métiers (RTMC 🇹🇳 &amp; ESCO 🇪🇺), mesurez votre score d'adéquation et obtenez un plan de reconversion personnalisé.</p>
+      </div>
+      <div class="mobility-section-header-right">
+        <div class="mobility-stat-pill">🇹🇳 530 métiers RTMC</div>
+        <div class="mobility-stat-pill">🇪🇺 2 938 métiers ESCO</div>
+      </div>
+    </div>
+
+    <!-- Steps indicator -->
+    <div class="mobility-steps-row">
+      <div class="mobility-step active">
+        <span class="mobility-step-num">1</span>
+        <span class="mobility-step-label">Métier Source (A)</span>
+      </div>
+      <div class="mobility-step-line"></div>
+      <div class="mobility-step active">
+        <span class="mobility-step-num">2</span>
+        <span class="mobility-step-label">Métier Cible (B)</span>
+      </div>
+      <div class="mobility-step-line"></div>
+      <div class="mobility-step" id="mobility-step-result">
+        <span class="mobility-step-num">3</span>
+        <span class="mobility-step-label">Résultats IA</span>
+      </div>
+    </div>
+
+    <!-- Main Form Card -->
+    <div class="mobility-box">
+      <div class="mobility-form-row">
+
+        <!-- Source Job A -->
+        <div class="mobility-field-group">
+          <label for="mobility-input-source">
+            <span class="mobility-field-badge mobility-field-badge-a">A</span>
+            Métier Actuel &amp; Source
+          </label>
+          <div class="mobility-input-wrap">
+            <span class="mobility-input-icon">💼</span>
+            <input type="text" id="mobility-input-source" placeholder="Ex: Conducteur d'engins agricoles…" autocomplete="off">
+            <div class="mobility-sugg-box" id="mobility-sugg-source"></div>
+          </div>
+        </div>
+
+        <div class="mobility-arrow-icon">➔</div>
+
+        <!-- Target Job B -->
+        <div class="mobility-field-group">
+          <label for="mobility-input-target">
+            <span class="mobility-field-badge mobility-field-badge-b">B</span>
+            Métier Visé &amp; Cible
+          </label>
+          <div class="mobility-input-wrap">
+            <span class="mobility-input-icon">🎯</span>
+            <input type="text" id="mobility-input-target" placeholder="Ex: Mécanicien d'engins de chantier…" autocomplete="off">
+            <div class="mobility-sugg-box" id="mobility-sugg-target"></div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mobility-action-group">
+          <button class="btn-primary btn-mobility-analyze" id="btn-analyze-mobility">
+            ⚡ Analyser
+          </button>
+          <button class="btn-mobility-reset" id="btn-reset-mobility" title="Réinitialiser l'analyse">
+            ↺ Réinitialiser
+          </button>
+        </div>
+      </div>
+
+      <!-- Analysis Results Output -->
+      <div class="mobility-results-output" id="mobility-results-output" style="display:none">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+
+  </div>
+</section>

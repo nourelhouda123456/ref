@@ -1,0 +1,30 @@
+<!-- HERO & SEARCH COMPONENT -->
+<section class="hero-band" id="explore-zone">
+  <div class="hero-content">
+    <h1 data-i18n="hero_title">Découvrez le métier qui vous correspond</h1>
+    <p data-i18n="hero_subtitle">Explorez les métiers, les compétences et les secteurs du Référentiel Tunisien.</p>
+
+    <!-- SEARCH BAR -->
+    <div class="search-wrap" id="search-wrap">
+      <form class="search-bar" id="hero-search-form" autocomplete="off">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="hero-search-input" data-i18n-placeholder="search_placeholder" placeholder="Rechercher un métier, une compétence…">
+        <button type="submit" id="btn-search" data-i18n="btn_search">Rechercher</button>
+      </form>
+      <div class="suggestions-box" id="search-suggestions"></div>
+    </div>
+
+    <!-- SECTOR PILLS (horizontal scroll) -->
+    <div class="sector-pills-wrap">
+      <div class="sector-pills" id="sector-pills">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+
+    <!-- RESULTS INFO BAR -->
+    <div class="results-bar" id="results-bar">
+      <span class="results-count" id="results-count">3 468 métiers disponibles</span>
+      <button class="btn-clear-filters" id="btn-clear-filters" style="display:none" data-i18n="btn_clear">✕ Effacer les filtres</button>
+    </div>
+  </div>
+</section>

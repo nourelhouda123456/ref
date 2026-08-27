@@ -5,6 +5,8 @@
  *
  * Les données sont chargées depuis MongoDB au démarrage (via init()).
  */
+const fs = require('fs');
+const path = require('path');
 const { connectDB, getMetiersCollection, getEmbeddingsCollection, getEscoCollection } = require('./db');
 
 const VOYAGE_API_URL = 'https://api.voyageai.com/v1/embeddings';
@@ -22,30 +24,66 @@ let embeddings = [];
  * Charge à la fois les fiches RTMC et ESCO.
  */
 async function init() {
-  await connectDB();
+  try {
+    await connectDB();
+  } catch (err) {
+    console.log('⚠️ MongoDB non disponible, utilisation des fichiers de secours locaux.');
+  }
 
   // 1. Charger les fiches RTMC
-  const metiersCol = getMetiersCollection();
-  rtmcMetiers = (await metiersCol.find({}).toArray()).map(m => ({
-    ...m,
-    source: m.source || 'rtmc',
-    domaineGrand: m.domaineGrand || m.domaine || 'RTMC (Tunisie)'
-  }));
-  console.log(`📚 ${rtmcMetiers.length} fiches métiers RTMC chargées depuis MongoDB`);
+  try {
+    const metiersCol = getMetiersCollection();
+    if (metiersCol) {
+      rtmcMetiers = (await metiersCol.find({}).toArray()).map(m => ({
+        ...m,
+        source: m.source || 'rtmc',
+        domaineGrand: m.domaineGrand || m.domaine || 'RTMC (Tunisie)'
+      }));
+    }
+  } catch (err) {
+    rtmcMetiers = [];
+  }
+
+  if (rtmcMetiers.length === 0) {
+    const localRtmcPath = path.join(__dirname, 'data', 'metiers_with_salaries.json');
+    const fallbackPath = fs.existsSync(localRtmcPath) ? localRtmcPath : path.join(__dirname, 'data', 'metiers.json');
+    if (fs.existsSync(fallbackPath)) {
+      console.log(`📁 Chargement RTMC depuis fichier local (${path.basename(fallbackPath)})...`);
+      rtmcMetiers = JSON.parse(fs.readFileSync(fallbackPath, 'utf8')).map(m => ({
+        ...m,
+        source: 'rtmc',
+        domaineGrand: m.domaineGrand || m.domaine || 'RTMC (Tunisie)'
+      }));
+    }
+  }
+  console.log(`📚 ${rtmcMetiers.length} fiches métiers RTMC chargées`);
 
   // 2. Charger les fiches ESCO
   try {
     const escoCol = getEscoCollection();
-    escoMetiers = (await escoCol.find({}).toArray()).map(m => ({
-      ...m,
-      source: 'esco',
-      domaineGrand: m.domaineGrand || 'ESCO (Europe)'
-    }));
-    console.log(`🇪🇺 ${escoMetiers.length} fiches métiers ESCO chargées depuis MongoDB`);
+    if (escoCol) {
+      escoMetiers = (await escoCol.find({}).toArray()).map(m => ({
+        ...m,
+        source: 'esco',
+        domaineGrand: m.domaineGrand || 'ESCO (Europe)'
+      }));
+    }
   } catch (err) {
-    console.log('⚠️ Collection ESCO non disponible ou vide.');
     escoMetiers = [];
   }
+
+  if (escoMetiers.length === 0) {
+    const localEscoPath = path.join(__dirname, 'data', 'esco_occupations.json');
+    if (fs.existsSync(localEscoPath)) {
+      console.log(`📁 Chargement ESCO depuis fichier local (esco_occupations.json)...`);
+      escoMetiers = JSON.parse(fs.readFileSync(localEscoPath, 'utf8')).map(m => ({
+        ...m,
+        source: 'esco',
+        domaineGrand: m.domaineGrand || 'ESCO (Europe)'
+      }));
+    }
+  }
+  console.log(`🇪🇺 ${escoMetiers.length} fiches métiers ESCO chargées`);
 
   // 3. Fusionner les deux référentiels
   metiers = [...rtmcMetiers, ...escoMetiers];
@@ -53,9 +91,23 @@ async function init() {
   console.log(`🌐 Total fiches actives : ${metiers.length} (RTMC: ${rtmcMetiers.length}, ESCO: ${escoMetiers.length})`);
 
   // 4. Charger les embeddings
-  const embeddingsCol = getEmbeddingsCollection();
-  embeddings = await embeddingsCol.find({}).toArray();
-  console.log(`🧠 ${embeddings.length} embeddings chargés depuis MongoDB`);
+  try {
+    const embeddingsCol = getEmbeddingsCollection();
+    if (embeddingsCol) {
+      embeddings = await embeddingsCol.find({}).toArray();
+    }
+  } catch (err) {
+    embeddings = [];
+  }
+
+  if (embeddings.length === 0) {
+    const localEmbPath = path.join(__dirname, 'data', 'metiers_embeddings.json');
+    if (fs.existsSync(localEmbPath)) {
+      console.log(`📁 Chargement Embeddings depuis fichier local...`);
+      embeddings = JSON.parse(fs.readFileSync(localEmbPath, 'utf8'));
+    }
+  }
+  console.log(`🧠 ${embeddings.length} embeddings chargés`);
 }
 
 function normalize(value = '') {
