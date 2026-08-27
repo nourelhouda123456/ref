@@ -32,20 +32,55 @@ async function importData() {
   await metiersCol.createIndex({ titre: 'text', resume: 'text', definition: 'text' });
   console.log('📇 Index créés sur metiers (code, url, text)');
 
-  // --- Import des embeddings ---
+  // --- Import des embeddings (RTMC + ESCO) ---
+  const embeddingsCol = getEmbeddingsCollection();
+  await embeddingsCol.deleteMany({});
+  
+  let allEmbeddings = [];
   if (fs.existsSync(EMBEDDINGS_FILE)) {
-    const embeddingsCol = getEmbeddingsCollection();
-    const embeddings = JSON.parse(fs.readFileSync(EMBEDDINGS_FILE, 'utf8'));
-    console.log(`📂 ${embeddings.length} embeddings lus depuis ${path.basename(EMBEDDINGS_FILE)}`);
+    const rtmcEmb = JSON.parse(fs.readFileSync(EMBEDDINGS_FILE, 'utf8')).map(e => ({ ...e, source: 'rtmc' }));
+    allEmbeddings.push(...rtmcEmb);
+    console.log(`📂 ${rtmcEmb.length} embeddings RTMC lus depuis ${path.basename(EMBEDDINGS_FILE)}`);
+  }
 
-    await embeddingsCol.deleteMany({});
-    const embResult = await embeddingsCol.insertMany(embeddings);
-    console.log(`✅ ${embResult.insertedCount} embeddings importés dans la collection "embeddings"`);
+  const ESCO_EMBEDDINGS_FILE = path.join(DATA_DIR, 'esco_embeddings.json');
+  if (fs.existsSync(ESCO_EMBEDDINGS_FILE)) {
+    const escoEmb = JSON.parse(fs.readFileSync(ESCO_EMBEDDINGS_FILE, 'utf8')).map(e => ({ ...e, source: 'esco' }));
+    allEmbeddings.push(...escoEmb);
+    console.log(`📂 ${escoEmb.length} embeddings ESCO lus depuis ${path.basename(ESCO_EMBEDDINGS_FILE)}`);
+  }
 
+  if (allEmbeddings.length > 0) {
+    const embResult = await embeddingsCol.insertMany(allEmbeddings);
+    console.log(`✅ ${embResult.insertedCount} embeddings au total importés dans la collection "embeddings"`);
+    await embeddingsCol.dropIndexes().catch(() => {});
     await embeddingsCol.createIndex({ url: 1 }, { unique: true });
     console.log('📇 Index créé sur embeddings (url)');
   } else {
-    console.log('⚠️  Fichier embeddings non trouvé, collection embeddings ignorée.');
+    console.log('⚠️  Aucun fichier d\'embeddings trouvé.');
+  }
+
+  // --- Import ESCO ---
+  const ESCO_FILE = path.join(DATA_DIR, 'esco_occupations.json');
+  if (fs.existsSync(ESCO_FILE)) {
+    const { getEscoCollection } = require('./db');
+    const escoCol = getEscoCollection();
+    const escoData = JSON.parse(fs.readFileSync(ESCO_FILE, 'utf8'));
+    console.log(`📂 ${escoData.length} fiches ESCO lues depuis ${path.basename(ESCO_FILE)}`);
+
+    await escoCol.deleteMany({});
+    if (escoData.length > 0) {
+      const escoResult = await escoCol.insertMany(escoData);
+      console.log(`✅ ${escoResult.insertedCount} fiches ESCO importées dans la collection "esco"`);
+
+      await escoCol.dropIndexes().catch(() => {});
+      await escoCol.createIndex({ uri: 1 }, { unique: true });
+      await escoCol.createIndex({ code: 1 });
+      await escoCol.createIndex({ titre: 'text', resume: 'text' });
+      console.log('📇 Index créés sur esco (uri, code, text)');
+    }
+  } else {
+    console.log('⚠️  Fichier esco_occupations.json non trouvé (optionnel).');
   }
 
   await closeDB();

@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.allMetiers   = [];
   window.allSkills    = [];
   window.comparedJobs = JSON.parse(localStorage.getItem('rtmc_compared') || '[]');
-  window.currentLang  = localStorage.getItem('rtmc_lang') || 'fr';
+  window.currentLang  = 'fr';
 
   let selectedDomain    = null;
   let activeSearchQuery = '';
@@ -244,15 +244,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ─── Language ──────────────────────────────────────────────────────
   function initLang() {
-    const sel = $('#lang-select-header');
-    if (!sel) return;
-    sel.value = window.currentLang;
-    sel.addEventListener('change', e => {
-      window.currentLang = e.target.value;
-      localStorage.setItem('rtmc_lang', window.currentLang);
-      applyT();
-      renderGrid();
-    });
     applyT();
   }
 
@@ -1127,16 +1118,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const div = document.createElement('div');
     div.id    = id;
     div.className = 'chat-msg assistant';
-    const cards = sources.map(s => `
+    const cards = sources.map(s => {
+      const isEsco = s.source === 'esco' || (s.code && s.code.startsWith('ESCO')) || (s.url && s.url.includes('esco'));
+      const badgeText = isEsco ? '🇪🇺 ESCO' : '🇹🇳 RTMC';
+      const badgeClass = isEsco ? 'chat-badge-esco' : 'chat-badge-rtmc';
+      return `
       <div class="chat-source-card" data-url="${esc(s.url || '')}">
-        <div class="chat-source-code">${esc(s.code || '')}</div>
+        <div class="chat-source-header">
+          <span class="chat-source-code">${esc(s.code || '')}</span>
+          <span class="chat-source-origin ${badgeClass}">${badgeText}</span>
+        </div>
         <div class="chat-source-title">${esc(s.titre || '')}</div>
         <div class="chat-source-meta">
           <span class="chat-source-domain">${esc(s.domaine || '')}</span>
           ${s.pertinence != null ? `<span class="chat-source-score">${s.pertinence}%</span>` : ''}
         </div>
       </div>
-    `).join('');
+      `;
+    }).join('');
     div.innerHTML = `<div class="chat-sources-wrap">${cards}</div>`;
     msgs.appendChild(div);
     msgs.scrollTop = msgs.scrollHeight;

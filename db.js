@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { MongoClient } = require('mongodb');
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
@@ -22,8 +23,12 @@ function getEmbeddingsCollection() {
   return db.collection('embeddings');
 }
 
+function getEscoCollection() {
+  return db.collection('esco');
+}
+
 async function closeDB() {
   if (client) await client.close();
 }
 
-module.exports = { connectDB, getMetiersCollection, getEmbeddingsCollection, closeDB };
+module.exports = { connectDB, getMetiersCollection, getEmbeddingsCollection, getEscoCollection, closeDB };

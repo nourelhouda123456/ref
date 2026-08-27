@@ -1,31 +1,58 @@
 /**
- * Moteur RAG RTMC : les réponses et recommandations restent toujours reliées
- * à une fiche officielle (code + URL RTMC). Aucun fine-tuning n'est requis.
+ * Moteur RAG Multi-Référentiel : RTMC (Tunisie) + ESCO (Europe)
+ * Les réponses et recommandations restent toujours reliées
+ * à une fiche officielle (code + URL).
  *
  * Les données sont chargées depuis MongoDB au démarrage (via init()).
  */
-const { connectDB, getMetiersCollection, getEmbeddingsCollection } = require('./db');
+const { connectDB, getMetiersCollection, getEmbeddingsCollection, getEscoCollection } = require('./db');
 
 const VOYAGE_API_URL = 'https://api.voyageai.com/v1/embeddings';
 const VOYAGE_MODEL = 'voyage-4-lite';
 
 // Données chargées en mémoire depuis MongoDB (cache)
-let metiers = [];
+let rtmcMetiers = [];
+let escoMetiers = [];
+let metiers = []; // Ensemble combiné RTMC + ESCO
 let metiersByUrl = new Map();
 let embeddings = [];
 
 /**
  * Initialise le service RAG : se connecte à MongoDB et charge les données en mémoire.
- * Doit être appelé avant toute utilisation des fonctions ask/recommend/etc.
+ * Charge à la fois les fiches RTMC et ESCO.
  */
 async function init() {
   await connectDB();
 
+  // 1. Charger les fiches RTMC
   const metiersCol = getMetiersCollection();
-  metiers = await metiersCol.find({}).toArray();
-  metiersByUrl = new Map(metiers.map((m) => [m.url, m]));
-  console.log(`📚 ${metiers.length} fiches métiers chargées depuis MongoDB`);
+  rtmcMetiers = (await metiersCol.find({}).toArray()).map(m => ({
+    ...m,
+    source: m.source || 'rtmc',
+    domaineGrand: m.domaineGrand || m.domaine || 'RTMC (Tunisie)'
+  }));
+  console.log(`📚 ${rtmcMetiers.length} fiches métiers RTMC chargées depuis MongoDB`);
 
+  // 2. Charger les fiches ESCO
+  try {
+    const escoCol = getEscoCollection();
+    escoMetiers = (await escoCol.find({}).toArray()).map(m => ({
+      ...m,
+      source: 'esco',
+      domaineGrand: m.domaineGrand || 'ESCO (Europe)'
+    }));
+    console.log(`🇪🇺 ${escoMetiers.length} fiches métiers ESCO chargées depuis MongoDB`);
+  } catch (err) {
+    console.log('⚠️ Collection ESCO non disponible ou vide.');
+    escoMetiers = [];
+  }
+
+  // 3. Fusionner les deux référentiels
+  metiers = [...rtmcMetiers, ...escoMetiers];
+  metiersByUrl = new Map(metiers.map((m) => [m.url, m]));
+  console.log(`🌐 Total fiches actives : ${metiers.length} (RTMC: ${rtmcMetiers.length}, ESCO: ${escoMetiers.length})`);
+
+  // 4. Charger les embeddings
   const embeddingsCol = getEmbeddingsCollection();
   embeddings = await embeddingsCol.find({}).toArray();
   console.log(`🧠 ${embeddings.length} embeddings chargés depuis MongoDB`);
@@ -48,10 +75,15 @@ function cosine(a, b) {
 }
 
 function documentText(m) {
-  return [m.titre, m.code, m.domaineGrand, m.domaineProfessionnel, m.resume,
-    m.definition, ...(m.appellations || []), ...(m.competencesTechniquesSavoirFaire || []),
-    ...(m.competencesTechniquesSavoir || []), ...(m.competencesComportementales || []),
-    ...(m.competencesNumeriques || []), ...(m.environnementSecteurs || [])].filter(Boolean).join(' ');
+  return [
+    m.titre, m.code, m.domaineGrand, m.domaineProfessionnel, m.resume,
+    m.definition, ...(m.appellations || []),
+    ...(m.competencesTechniquesSavoirFaire || m.essentialSkills || []),
+    ...(m.competencesTechniquesSavoir || m.optionalSkills || []),
+    ...(m.competencesComportementales || []),
+    ...(m.competencesNumeriques || []),
+    ...(m.environnementSecteurs || [])
+  ].filter(Boolean).join(' ');
 }
 
 function lexicalSearch(query, limit) {
@@ -60,9 +92,6 @@ function lexicalSearch(query, limit) {
     const docTokens = new Set(tokens(documentText(metier)));
     const titleTokens = new Set(tokens(`${metier.titre} ${(metier.appellations || []).join(' ')}`));
     const matches = queryTokens.filter((token) => docTokens.has(token));
-    // Le titre et les appellations sont volontairement surpondérés : une question
-    // qui nomme « développeur informatique » doit retrouver cette fiche avant
-    // un métier qui partage seulement le mot « informatique ».
     const titleMatches = queryTokens.filter((token) => titleTokens.has(token));
     const exactTitle = normalize(query).includes(normalize(metier.titre));
     const score = (matches.length + (titleMatches.length * 3) + (exactTitle ? 8 : 0))
@@ -86,58 +115,116 @@ async function embedQuery(query) {
 
 async function search(query, limit = 5) {
   if (!query || !query.trim()) throw new Error('La question ou le profil CV est requis.');
-  const vector = await embedQuery(query);
-  if (!vector || embeddings.length === 0) return lexicalSearch(query, limit);
+  
+  // 1. Recherche lexicale sur l'ensemble complet (RTMC + ESCO : 3 468 fiches)
+  const lexicalResults = lexicalSearch(query, limit * 6);
+  const lexicalMap = new Map(lexicalResults.map(r => [r.metier.url, r]));
 
-  return embeddings.map((item) => ({
-    metier: metiersByUrl.get(item.url), score: cosine(vector, item.embedding), matches: [],
-  })).filter((r) => r.metier).sort((a, b) => b.score - a.score).slice(0, limit);
+  // 2. Recherche sémantique si clé présente et embeddings disponibles
+  const vector = await embedQuery(query).catch(() => null);
+  const semanticMap = new Map();
+  if (vector && embeddings.length > 0) {
+    for (const item of embeddings) {
+      const metier = metiersByUrl.get(item.url);
+      if (metier) {
+        const score = cosine(vector, item.embedding);
+        semanticMap.set(item.url, score);
+      }
+    }
+  }
+
+  // 3. Fusion et score hybride pour chaque métier candidat
+  const candidateUrls = new Set([...lexicalMap.keys(), ...semanticMap.keys()]);
+  const ranked = [];
+
+  for (const url of candidateUrls) {
+    const metier = metiersByUrl.get(url);
+    if (!metier) continue;
+
+    const lexItem = lexicalMap.get(url);
+    const lexScore = lexItem ? lexItem.score : 0;
+    const semScore = semanticMap.get(url) || 0;
+    const matches = lexItem ? lexItem.matches : [];
+
+    let finalScore = 0;
+    if (semScore > 0 && lexScore > 0) {
+      // Les deux moteurs confirment la pertinence
+      finalScore = (semScore * 0.45) + (lexScore * 0.55);
+    } else if (semScore > 0) {
+      finalScore = semScore * 0.8;
+    } else {
+      finalScore = lexScore;
+    }
+
+    if (finalScore > 0.05) {
+      ranked.push({ metier, score: finalScore, matches });
+    }
+  }
+
+  ranked.sort((a, b) => b.score - a.score);
+  return ranked.slice(0, limit);
 }
 
 function reference(metier, score) {
+  const isEsco = metier.source === 'esco' || metier.uri?.includes('esco');
   return {
     code: metier.code,
     titre: metier.titre,
-    domaine: metier.domaineGrand,
+    domaine: metier.domaineGrand || metier.domaine,
     url: metier.url,
     pertinence: Math.max(0, Math.min(100, Math.round(score * 100))),
     salary: metier.salary || null,
+    source: isEsco ? 'esco' : 'rtmc',
   };
 }
 
-// Réponse extractive : les faits exposés proviennent de la fiche, sans invention d'un LLM.
+// Réponse extractive : les faits exposés proviennent de la fiche officielle
 function answerFromMetier(question, metier) {
   const q = normalize(question);
-  if (/competence|savoir-faire|qualification|qualite/.test(q)) {
-    const skills = [...(metier.competencesTechniquesSavoirFaire || []), ...(metier.competencesTechniquesSavoir || []), ...(metier.competencesComportementales || [])];
-    return skills.length ? skills.join('; ') : metier.definition;
+  const isEsco = metier.source === 'esco' || metier.uri?.includes('esco');
+
+  if (/competence|savoir-faire|qualification|qualite|skill/.test(q)) {
+    const skills = [
+      ...(metier.competencesTechniquesSavoirFaire || metier.essentialSkills || []),
+      ...(metier.competencesTechniquesSavoir || metier.optionalSkills || []),
+      ...(metier.competencesComportementales || [])
+    ];
+    return skills.length ? skills.join('; ') : (metier.definition || metier.resume);
   }
-  if (/formation|diplome|acced|acces|devenir|etud/.test(q)) return metier.accesEmploi || metier.definition;
-  if (/secteur|ou travailler|entreprise|environnement/.test(q)) return (metier.environnementSecteurs || []).join('; ') || metier.definition;
-  if (/numerique|informatique/.test(q) && (metier.competencesNumeriques || []).length) return metier.competencesNumeriques.join('; ');
+  if (/formation|diplome|acced|acces|devenir|etud/.test(q)) {
+    if (isEsco) {
+      return metier.accesEmploi || `Fiche ESCO (Référentiel Européen) : ${metier.definition || metier.resume}`;
+    }
+    return metier.accesEmploi || metier.definition || metier.resume;
+  }
+  if (/secteur|ou travailler|entreprise|environnement/.test(q)) {
+    return (metier.environnementSecteurs || []).join('; ') || metier.domaineProfessionnel || metier.definition;
+  }
+  if (/numerique|informatique/.test(q) && (metier.competencesNumeriques || []).length) {
+    return metier.competencesNumeriques.join('; ');
+  }
   // Gestion du salaire
   if (/salaire|remuneration|rémunération|pay|earn/.test(q)) {
+    if (isEsco) {
+      return `Le référentiel européen ESCO ne contient pas de grille salariale locale pour le métier de ${metier.titre}.`;
+    }
     if (!metier.salary) return `Aucune donnée de salaire n'est disponible pour ${metier.titre}.`;
     
-    // Si le salaire est un objet structuré (min, max, avg, currency, period)
     if (typeof metier.salary === 'object' && metier.salary.salaryAvg) {
       return `Le salaire moyen de ${metier.titre} est d'environ ${metier.salary.salaryAvg} ${metier.salary.currency} / ${metier.salary.period} (fourchette : ${metier.salary.salaryMin} - ${metier.salary.salaryMax} ${metier.salary.currency}).`;
     }
-    
-    // Si le salaire est une simple chaîne
     return `Le salaire moyen de ${metier.titre} est ${metier.salary}.`;
   }
   return metier.definition || metier.resume;
 }
 
 async function ask(question) {
-  // Simple greeting handling – if the user just says hello, respond with the welcome message.
   if (/^\s*(bonjour|salut|bonsoir|hello|hi)\b/i.test(question)) {
-    return { answer: '👋 Bonjour ! Posez-moi une question sur les métiers, les compétences, les formations…', sources: [], mode: 'lexical' };
+    return { answer: '👋 Bonjour ! Posez-moi une question sur les métiers, les compétences (RTMC ou ESCO), les formations…', sources: [], mode: 'lexical' };
   }
 
   const results = await search(question, 3);
-  if (!results.length) return { answer: 'Je n\'ai pas trouvé de fiche RTMC correspondant à votre requête. Pouvez-vous reformuler ?', sources: [], mode: 'lexical' };
+  if (!results.length) return { answer: 'Je n\'ai pas trouvé de fiche RTMC ou ESCO correspondant à votre requête. Pouvez-vous reformuler ?', sources: [], mode: 'lexical' };
   const best = results[0].metier;
   return {
     answer: answerFromMetier(question, best),
@@ -146,16 +233,15 @@ async function ask(question) {
   };
 }
 
-
 async function recommend(cvText, limit = 5) {
   const results = await search(cvText, limit);
   return {
     recommendations: results.map(({ metier, score, matches }) => ({
       ...reference(metier, score),
       raison: matches.length
-        ? `Mots clés du profil retrouvés dans la fiche : ${matches.slice(0, 8).join(', ')}.`
-        : `Compatibilité sémantique entre le profil et les compétences de la fiche RTMC.`,
-      competencesPrincipales: (metier.competencesTechniquesSavoirFaire || []).slice(0, 5),
+        ? `Mots clés du profil retrouvés : ${matches.slice(0, 8).join(', ')}.`
+        : `Compatibilité avec le référentiel ${metier.source === 'esco' ? 'européen (ESCO)' : 'tunisien (RTMC)'}.`,
+      competencesPrincipales: (metier.competencesTechniquesSavoirFaire || metier.essentialSkills || []).slice(0, 5),
     })),
     mode: process.env.VOYAGE_API_KEY && embeddings.length ? 'semantic' : 'lexical',
   };
@@ -168,7 +254,7 @@ function getSimilarMetiers(url, limit = 5) {
     const job = metiers.find((m) => m.url === url);
     if (!job) return [];
     return metiers
-      .filter((m) => m.url !== url && m.domaineGrand === job.domaineGrand)
+      .filter((m) => m.url !== url && (m.domaineGrand === job.domaineGrand || m.source === job.source))
       .slice(0, limit)
       .map((m) => reference(m, 0.7));
   }
@@ -184,4 +270,13 @@ function getSimilarMetiers(url, limit = 5) {
     .map(({ metier, score }) => reference(metier, score));
 }
 
-module.exports = { init, ask, recommend, metiersCount: () => metiers.length, metiers: () => metiers, getSimilarMetiers };
+module.exports = {
+  init,
+  ask,
+  recommend,
+  metiersCount: () => metiers.length,
+  metiers: () => metiers,
+  rtmcCount: () => rtmcMetiers.length,
+  escoCount: () => escoMetiers.length,
+  getSimilarMetiers
+};

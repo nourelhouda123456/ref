@@ -1439,7 +1439,11 @@ img{max-width:100%}
 .chat-sources-wrap{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 .chat-source-card{background:var(--bg-light);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;display:flex;flex-direction:column;gap:4px;transition:var(--t)}
 .chat-source-card:hover{background:var(--bg);box-shadow:0 2px 6px rgba(0,0,0,.05)}
+.chat-source-header{display:flex;justify-content:space-between;align-items:center}
 .chat-source-code{font-size:11px;font-weight:700;color:var(--primary)}
+.chat-source-origin{font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px;text-transform:uppercase;letter-spacing:0.3px}
+.chat-badge-rtmc{background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd}
+.chat-badge-esco{background:#dcfce7;color:#15803d;border:1px solid #bbf7d0}
 .chat-source-title{font-size:13px;font-weight:600;color:var(--text)}
 .chat-source-meta{font-size:12px;color:var(--text-muted);display:flex;gap:8px;align-items:center}
 .chat-source-domain{background:var(--primary-light);color:var(--primary);padding:2px 6px;border-radius:var(--r-full);font-size:11px}
