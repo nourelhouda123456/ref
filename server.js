@@ -2,7 +2,7 @@ const http = require('http');
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { init, ask, recommend, metiersCount, metiers, getSimilarMetiers } = require('./ragService');
+const { init, ask, recommend, metiersCount, metiers, getSimilarMetiers, analyzeTransferability } = require('./ragService');
 
 const PORT = Number(process.env.PORT || 3000);
 const MAX_BODY_BYTES = 8_000_000;
@@ -67,6 +67,12 @@ async function start() {
           const queryUrl = body.url || url.searchParams.get('url');
           const limit = Math.min(Number(body.limit || url.searchParams.get('limit')) || 5, 10);
           return json(res, 200, getSimilarMetiers(queryUrl, limit));
+        }
+        if (url.pathname === '/api/transferability') {
+          const sourceUrl = body.sourceUrl || url.searchParams.get('sourceUrl');
+          const targetUrl = body.targetUrl || url.searchParams.get('targetUrl');
+          if (!sourceUrl || !targetUrl) return json(res, 400, { error: 'sourceUrl et targetUrl requis.' });
+          return json(res, 200, analyzeTransferability(sourceUrl, targetUrl));
         }
         return json(res, 404, { error: 'Route API introuvable.' });
       } catch (error) {

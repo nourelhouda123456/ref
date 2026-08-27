@@ -297,6 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       showShimmer(false);
       setupToolbarControls();
+      setupMobilityMatrix();
       renderSectorPills();
       renderGrid();
       renderSkills();
@@ -1185,6 +1186,184 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
+  // ─── Mobility & Transferability Matrix Logic ────────────────────────
+  let selectedSourceJob = null;
+  let selectedTargetJob = null;
+
+  function setupMobilityMatrix() {
+    const inputSource = $('#mobility-input-source');
+    const suggSource  = $('#mobility-sugg-source');
+    const inputTarget = $('#mobility-input-target');
+    const suggTarget  = $('#mobility-sugg-target');
+    const btnAnalyze  = $('#btn-analyze-mobility');
+
+    if (!inputSource || !inputTarget || !btnAnalyze) return;
+
+    function setupAutocomplete(inputEl, suggEl, onSelect) {
+      inputEl.oninput = debounce(() => {
+        const q = inputEl.value.trim().toLowerCase();
+        if (q.length < 2) { suggEl.style.display = 'none'; return; }
+        const matches = (window.allMetiers || []).filter(m => 
+          (m.titre || '').toLowerCase().includes(q) || (m.code || '').toLowerCase().includes(q)
+        ).slice(0, 7);
+
+        if (!matches.length) { suggEl.style.display = 'none'; return; }
+
+        const header = `<div class="mobility-sugg-header">🔍 ${matches.length} résultat${matches.length > 1 ? 's' : ''} trouvé${matches.length > 1 ? 's' : ''}</div>`;
+        const items = matches.map(m => {
+          const isEsco = m.source === 'esco';
+          const badgeClass = isEsco ? 'esco' : 'rtmc';
+          const badgeLabel = isEsco ? '🇪🇺 ESCO' : '🇹🇳 RTMC';
+          return `
+            <div class="mobility-sugg-item" data-url="${esc(m.url)}">
+              <div class="mobility-sugg-item-left">
+                <span class="mobility-sugg-title">${esc(m.titre)}</span>
+                <span class="mobility-sugg-code">Code : ${esc(m.code || '—')} &nbsp;·&nbsp; ${esc(m.domaineGrand || m.domaine || '')}</span>
+              </div>
+              <span class="mobility-sugg-badge ${badgeClass}">${badgeLabel}</span>
+            </div>`;
+        }).join('');
+        suggEl.innerHTML = header + items;
+        suggEl.style.display = 'block';
+        suggEl.style.overflowY = 'auto';
+
+        suggEl.querySelectorAll('.mobility-sugg-item').forEach(item => {
+          item.onclick = () => {
+            const found = window.allMetiers.find(m => m.url === item.dataset.url);
+            if (found) {
+              inputEl.value = `${found.titre} (${found.code || ''})`;
+              onSelect(found);
+            }
+            suggEl.style.display = 'none';
+          };
+        });
+      }, 150);
+
+      document.addEventListener('click', e => {
+        if (!inputEl.contains(e.target) && !suggEl.contains(e.target)) {
+          suggEl.style.display = 'none';
+        }
+      });
+    }
+
+    setupAutocomplete(inputSource, suggSource, m => selectedSourceJob = m);
+    setupAutocomplete(inputTarget, suggTarget, m => selectedTargetJob = m);
+
+    btnAnalyze.onclick = async () => {
+      if (!selectedSourceJob || !selectedTargetJob) {
+        showToast('Veuillez sélectionner le Métier Source (A) et le Métier Cible (B)', 'warning');
+        return;
+      }
+
+      btnAnalyze.disabled = true;
+      btnAnalyze.textContent = '⏳ Analyse en cours...';
+
+      try {
+        const res = await fetch('/api/transferability', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceUrl: selectedSourceJob.url || selectedSourceJob.code,
+            targetUrl: selectedTargetJob.url || selectedTargetJob.code
+          })
+        });
+
+        const data = await res.json();
+        btnAnalyze.disabled = false;
+        btnAnalyze.innerHTML = '⚡ Analyser';
+
+        if (data.error) throw new Error(data.error);
+
+        // Mark step 3 done
+        const step3 = document.getElementById('mobility-step-result');
+        if (step3) step3.classList.add('active', 'done');
+
+        renderMobilityResults(data);
+      } catch (err) {
+        btnAnalyze.disabled = false;
+        btnAnalyze.innerHTML = '⚡ Analyser';
+        showToast(err.message || 'Erreur lors de l\'analyse', 'warning');
+      }
+    };
+
+    // Reset button
+    const btnReset = document.getElementById('btn-reset-mobility');
+    if (btnReset) {
+      btnReset.onclick = () => {
+        selectedSourceJob = null;
+        selectedTargetJob = null;
+        if (inputSource) inputSource.value = '';
+        if (inputTarget) inputTarget.value = '';
+        const out = document.getElementById('mobility-results-output');
+        if (out) { out.style.display = 'none'; out.innerHTML = ''; }
+        const s3 = document.getElementById('mobility-step-result');
+        if (s3) s3.classList.remove('active', 'done');
+        showToast('Analyse réinitialisée ✓');
+      };
+    }
+  }
+
+  function renderMobilityResults(data) {
+    const output = $('#mobility-results-output');
+    if (!output) return;
+
+    const scoreDeg = Math.round((data.matchPercentage / 100) * 360);
+    const isSourceEsco = data.sourceJob.source === 'esco';
+    const isTargetEsco = data.targetJob.source === 'esco';
+
+    output.innerHTML = `
+      <div class="mobility-summary-card">
+        <div class="mobility-gauge-box">
+          <div class="mobility-score-circle" style="--score-deg: ${scoreDeg}">
+            <span class="mobility-score-val">${data.matchPercentage}%</span>
+          </div>
+          <span class="mobility-gauge-label">Transférabilité</span>
+        </div>
+
+        <div class="mobility-info-cols">
+          <h3 class="mobility-job-title">
+            Passerelle : <span style="color:var(--primary)">${esc(data.sourceJob.titre)}</span> ➔ <span style="color:#059669">${esc(data.targetJob.titre)}</span>
+          </h3>
+          <div>
+            <span class="chat-source-origin ${isSourceEsco ? 'chat-badge-esco' : 'chat-badge-rtmc'}">${isSourceEsco ? '🇪🇺 ESCO' : '🇹🇳 RTMC'}</span>
+            ➔
+            <span class="chat-source-origin ${isTargetEsco ? 'chat-badge-esco' : 'chat-badge-rtmc'}">${isTargetEsco ? '🇪🇺 ESCO' : '🇹🇳 RTMC'}</span>
+          </div>
+          <div class="mobility-badge-effort ${data.effortClass}">
+            📊 Niveau d'Effort : ${esc(data.effort)}
+          </div>
+        </div>
+      </div>
+
+      <div class="mobility-skills-grid">
+        <div class="mobility-skills-col">
+          <div class="mobility-skills-head acquired">
+            <span>✅ Compétences Déjà Acquises (${data.acquiredSkills.length})</span>
+          </div>
+          ${data.acquiredSkills.length ? data.acquiredSkills.map(s => `
+            <div class="mobility-skill-item acquired">
+              <span>✓ ${esc(s)}</span>
+            </div>
+          `).join('') : '<p style="font-size:13px;color:var(--text-muted)">Aucune compétence directe commune identifiée.</p>'}
+        </div>
+
+        <div class="mobility-skills-col">
+          <div class="mobility-skills-head missing">
+            <span>⚡ Compétences à Acquérir / Écart (${data.missingSkills.length})</span>
+          </div>
+          ${data.missingSkills.length ? data.missingSkills.map(s => `
+            <div class="mobility-skill-item missing">
+              <span>+ ${esc(s)}</span>
+            </div>
+          `).join('') : '<p style="font-size:13px;color:#16a34a">🎉 Profil 100% prêt pour cette reconversion !</p>'}
+        </div>
+      </div>
+    `;
+
+    output.style.display = 'block';
+    output.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
   // ─── Toast ─────────────────────────────────────────────────────────
   function showToast(msg, type = 'success') {
     const t = document.createElement('div');
@@ -1201,3 +1380,4 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 }); // end DOMContentLoaded
+

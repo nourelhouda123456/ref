@@ -270,6 +270,102 @@ function getSimilarMetiers(url, limit = 5) {
     .map(({ metier, score }) => reference(metier, score));
 }
 
+function analyzeTransferability(sourceUrl, targetUrl) {
+  const findJob = (key) => {
+    if (!key) return null;
+    const k = String(key).trim().toLowerCase();
+    return metiers.find(m => 
+      (m.url && m.url.toLowerCase() === k) ||
+      (m.code && m.code.toLowerCase() === k) ||
+      (m.titre && m.titre.toLowerCase() === k) ||
+      (m.url && m.url.toLowerCase().includes(k))
+    );
+  };
+
+  const sourceJob = findJob(sourceUrl);
+  const targetJob = findJob(targetUrl);
+
+  if (!sourceJob || !targetJob) {
+    throw new Error('Métier source ou cible introuvable.');
+  }
+
+  const getSkills = (m) => {
+    const list = [
+      ...(m.competencesTechniquesSavoirFaire || m.essentialSkills || []),
+      ...(m.competencesTechniquesSavoir || m.optionalSkills || []),
+      ...(m.competencesComportementales || []),
+      ...(m.competencesNumeriques || [])
+    ];
+    return Array.from(new Set(list.filter(Boolean).map(s => s.trim())));
+  };
+
+  const sourceSkills = getSkills(sourceJob);
+  const targetSkills = getSkills(targetJob);
+
+  const normalize = (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+  const acquired = [];
+  const missing = [];
+
+  const normSourceSkills = sourceSkills.map(s => ({ raw: s, norm: normalize(s) }));
+
+  targetSkills.forEach(tSkill => {
+    const normT = normalize(tSkill);
+    const match = normSourceSkills.find(s => s.norm === normT || s.norm.includes(normT) || normT.includes(s.norm));
+    if (match) {
+      acquired.push(tSkill);
+    } else {
+      missing.push(tSkill);
+    }
+  });
+
+  let matchPercentage = 0;
+  if (targetSkills.length > 0) {
+    matchPercentage = Math.round((acquired.length / targetSkills.length) * 100);
+  } else if (sourceJob.domaineGrand === targetJob.domaineGrand) {
+    matchPercentage = 75;
+  } else {
+    matchPercentage = 50;
+  }
+
+  if (sourceJob.domaineGrand === targetJob.domaineGrand && matchPercentage < 90) {
+    matchPercentage = Math.min(100, matchPercentage + 15);
+  }
+
+  let effort = 'Faible (Facile)';
+  let effortClass = 'easy';
+  if (matchPercentage < 40) {
+    effort = 'Élevé (Reconversion complète)';
+    effortClass = 'hard';
+  } else if (matchPercentage < 75) {
+    effort = 'Moyen (Formation complémentaire)';
+    effortClass = 'medium';
+  }
+
+  return {
+    sourceJob: {
+      code: sourceJob.code,
+      titre: sourceJob.titre,
+      source: sourceJob.source || 'rtmc',
+      domaineGrand: sourceJob.domaineGrand,
+      url: sourceJob.url
+    },
+    targetJob: {
+      code: targetJob.code,
+      titre: targetJob.titre,
+      source: targetJob.source || 'rtmc',
+      domaineGrand: targetJob.domaineGrand,
+      url: targetJob.url
+    },
+    matchPercentage,
+    effort,
+    effortClass,
+    totalTargetSkills: targetSkills.length,
+    acquiredSkills: acquired,
+    missingSkills: missing
+  };
+}
+
 module.exports = {
   init,
   ask,
@@ -278,5 +374,6 @@ module.exports = {
   metiers: () => metiers,
   rtmcCount: () => rtmcMetiers.length,
   escoCount: () => escoMetiers.length,
-  getSimilarMetiers
+  getSimilarMetiers,
+  analyzeTransferability
 };
