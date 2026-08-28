@@ -1687,5 +1687,51 @@ document.addEventListener('DOMContentLoaded', () => {
     return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
   }
 
+  // ─── MENU MOBILE HAMBURGER ──────────────────────────────────────
+  function initMobileMenu() {
+    const menuBtn = $('#mobile-menu-btn');
+    const menuOverlay = $('#mobile-menu-overlay');
+    const mobileLinks = $$('.mobile-nav-link');
+
+    if (!menuBtn || !menuOverlay) return;
+
+    // Toggle menu
+    menuBtn.onclick = () => {
+      menuBtn.classList.toggle('active');
+      menuOverlay.classList.toggle('open');
+      document.body.style.overflow = menuOverlay.classList.contains('open') ? 'hidden' : '';
+    };
+
+    // Fermer le menu quand on clique sur un lien
+    mobileLinks.forEach(link => {
+      link.onclick = () => {
+        menuBtn.classList.remove('active');
+        menuOverlay.classList.remove('open');
+        document.body.style.overflow = '';
+      };
+    });
+
+    // Fermer le menu en cliquant sur l'overlay
+    menuOverlay.onclick = (e) => {
+      if (e.target === menuOverlay) {
+        menuBtn.classList.remove('active');
+        menuOverlay.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+    };
+
+    // Fermer le menu avec la touche Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && menuOverlay.classList.contains('open')) {
+        menuBtn.classList.remove('active');
+        menuOverlay.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+    });
+  }
+
+  // ─── Initialisation ────────────────────────────────────────────────
+  initMobileMenu();
+
 }); // end DOMContentLoaded
 

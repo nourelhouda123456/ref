@@ -293,18 +293,132 @@ function answerFromMetier(question, metier) {
   return metier.definition || metier.resume;
 }
 
+const GROK_API_URL = 'https://api.x.ai/v1/chat/completions';
+const GROK_MODEL = process.env.GROK_MODEL || 'grok-2-1212';
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+
+/**
+ * Génération de réponse fluide et intelligente via LLM (Grok xAI, Groq, OpenAI)
+ * en lui fournissant le contexte exact extrait des référentiels RTMC & ESCO.
+ */
+async function generateWithGrok(question, candidates) {
+  const grokKey = process.env.GROK_API_KEY || process.env.XAI_API_KEY;
+  const groqKey = process.env.GROQ_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY;
+
+  if (!grokKey && !groqKey && !openaiKey) return null;
+
+  try {
+    const contextData = candidates.map(({ metier, score }) => {
+      const isEsco = metier.source === 'esco';
+      let salaryInfo = 'Non spécifié';
+      try {
+        const c = calculateCareerAndSalary(metier.url);
+        salaryInfo = `Débutant: ${c.levels.debutant.salaryMin}-${c.levels.debutant.salaryMax} ${c.currency}, Junior: ${c.levels.junior.salaryMin}-${c.levels.junior.salaryMax} ${c.currency}, Senior: ${c.levels.senior.salaryMin}-${c.levels.senior.salaryMax} ${c.currency}, Expert: ${c.levels.expert.salaryMin}-${c.levels.expert.salaryMax} ${c.currency}`;
+      } catch {}
+
+      return `--- FICHE RÉFÉRENTIEL : ${metier.titre} (Code : ${metier.code || 'N/A'}, Référentiel : ${isEsco ? 'ESCO Europe' : 'RTMC Tunisie'}) ---
+Domaine : ${metier.domaineGrand || metier.domaine || ''}
+Définition/Résumé : ${metier.definition || metier.resume || ''}
+Accès/Formation : ${metier.accesEmploi || 'N/A'}
+Savoir-faire clés : ${(metier.competencesTechniquesSavoirFaire || metier.essentialSkills || []).slice(0, 10).join(', ')}
+Connaissances : ${(metier.competencesTechniquesSavoir || metier.optionalSkills || []).slice(0, 8).join(', ')}
+Soft Skills : ${(metier.competencesComportementales || []).slice(0, 6).join(', ')}
+Compétences Numériques : ${(metier.competencesNumeriques || []).join(', ')}
+Grille Salariale par Séniorité : ${salaryInfo}
+`;
+    }).join('\n\n');
+
+    const prompt = `Tu es un conseiller carrière IA. Réponds de manière COURTE, SIMPLE et NATURELLE (2-4 phrases maximum).
+
+RÈGLES STRICTES :
+1. Réponds en français conversationnel simple (pas de tableaux, pas de formatage complexe)
+2. Pour les salaires : donne UNIQUEMENT les fourchettes principales (junior et senior suffisent)
+3. Maximum 3-4 lignes de texte
+4. Pas de "Conseil pratique", pas de listes à puces longues
+5. Va droit au but
+
+Exemple de bonne réponse :
+"Pour un développeur en Europe, le salaire junior se situe entre 30 000 et 44 000 EUR/an. Un profil senior peut atteindre 54 000 à 79 000 EUR/an selon l'expérience et le pays."
+
+CONTEXTE :
+${contextData}
+
+QUESTION :
+${question}`;
+
+    const messages = [
+      { role: 'system', content: 'Tu es un conseiller carrière. Réponds de manière courte et naturelle en 2-4 phrases maximum.' },
+      { role: 'user', content: prompt }
+    ];
+
+    let apiUrl = GROK_API_URL;
+    let apiKey = grokKey;
+    let modelName = GROK_MODEL;
+
+    if (grokKey) {
+      apiUrl = GROK_API_URL;
+      apiKey = grokKey;
+      modelName = process.env.GROK_MODEL || 'grok-2-1212';
+    } else if (groqKey) {
+      apiUrl = GROQ_API_URL;
+      apiKey = groqKey;
+      modelName = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+    } else if (openaiKey) {
+      apiUrl = OPENAI_API_URL;
+      apiKey = openaiKey;
+      modelName = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+    }
+
+    const res = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        messages,
+        model: modelName,
+        temperature: 0.7,
+        max_tokens: 200
+      })
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.warn(`⚠️ LLM API Error (${res.status}):`, errText);
+      return null;
+    }
+
+    const data = await res.json();
+    return data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : null;
+  } catch (err) {
+    console.warn('⚠️ Erreur appel LLM API:', err.message);
+    return null;
+  }
+}
+
 async function ask(question) {
-  if (/^\s*(bonjour|salut|bonsoir|hello|hi)\b/i.test(question)) {
-    return { answer: '👋 Bonjour ! Posez-moi une question sur les métiers, les compétences, les niveaux de séniorité (junior/senior) et les salaires RTMC & ESCO.', sources: [], mode: 'lexical' };
+  // Détection élargie des salutations (avec variantes: hi, hiii, heyy, etc.)
+  if (/^\s*(bonjour|salut|bonsoir|hello|he+y+|hi+)\s*[!?.]?\s*$/i.test(question)) {
+    return { answer: '👋 Bonjour ! Posez-moi une question sur les métiers, les compétences, les niveaux de séniorité (junior/senior) et les salaires RTMC & ESCO.', sources: [], mode: 'greeting' };
   }
 
   const results = await search(question, 3);
   if (!results.length) return { answer: 'Je n\'ai pas trouvé de fiche RTMC ou ESCO correspondant à votre requête. Pouvez-vous reformuler ?', sources: [], mode: 'lexical' };
-  const best = results[0].metier;
+  
+  // 1. Tenter la génération intelligente via Grok
+  const grokAnswer = await generateWithGrok(question, results);
+  
+  // 2. Si Grok a répondu, l'utiliser ; sinon fallback vers moteur local
+  const finalAnswer = grokAnswer || answerFromMetier(question, results[0].metier);
+  const activeMode = grokAnswer ? 'grok-ia' : (process.env.VOYAGE_API_KEY && embeddings.length ? 'semantic' : 'lexical');
+
   return {
-    answer: answerFromMetier(question, best),
+    answer: finalAnswer,
     sources: results.map(({ metier, score }) => reference(metier, score)),
-    mode: process.env.VOYAGE_API_KEY && embeddings.length ? 'semantic' : 'lexical',
+    mode: activeMode,
   };
 }
 
