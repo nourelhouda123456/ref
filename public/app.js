@@ -298,6 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showShimmer(false);
       setupToolbarControls();
       setupMobilityMatrix();
+      setupCareerSalarySimulator();
       renderSectorPills();
       renderGrid();
       renderSkills();
@@ -723,24 +724,72 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>`;
 
     setTimeout(() => {
-      const sal = getSalaryRange(metier);
+      const isEsco = metier.source === 'esco' || (metier.uri && metier.uri.includes('esco')) || (metier.code && metier.code.startsWith('ESCO'));
       const d   = T[window.currentLang];
       const totalSkills = (metier.competencesTechniquesSavoirFaire||[]).length
         + (metier.competencesTechniquesSavoir||[]).length
         + (metier.competencesComportementales||[]).length
         + (metier.competencesNumeriques||[]).length;
 
+      // Base salary calculation
+      let baseMin = 1000, baseMax = 1800;
+      const currency = isEsco ? 'EUR' : 'TND';
+      const period = isEsco ? 'an' : 'mois';
+
+      if (!isEsco) {
+        if (metier.salary && metier.salary.salaryMin && metier.salary.salaryMax) {
+          baseMin = metier.salary.salaryMin; baseMax = metier.salary.salaryMax;
+        } else {
+          const c0 = (metier.code || '').charAt(0).toUpperCase();
+          if (c0 === 'M') { baseMin = 1400; baseMax = 2500; }
+          else if (c0 === 'I') { baseMin = 1300; baseMax = 2200; }
+          else if (c0 === 'J') { baseMin = 1200; baseMax = 2100; }
+          else if (c0 === 'A') { baseMin = 750;  baseMax = 1200; }
+          else { baseMin = 950; baseMax = 1650; }
+        }
+      } else {
+        baseMin = 32000; baseMax = 48000;
+      }
+
+      const levelsDef = [
+        { id: 'debutant', label: '🌱 Débutant', exp: '0-1 an', mult: 0.80, bonus: 'Palier d\'entrée (0-1 an)' },
+        { id: 'junior',   label: '⚡ Junior',   exp: '1-3 ans', mult: 1.00, bonus: '+25% vs Débutant' },
+        { id: 'confirme', label: '⭐ Confirmé', exp: '3-5 ans', mult: 1.35, bonus: '+35% vs Junior' },
+        { id: 'senior',   label: '🚀 Senior',   exp: '5-8 ans', mult: 1.80, bonus: '+80% vs Junior' },
+        { id: 'expert',   label: '👑 Expert',   exp: '8+ ans',  mult: 2.40, bonus: '+140% vs Junior' }
+      ];
+
+      const initialLvl = levelsDef[1]; // Junior default
+      const initialMin = Math.round(baseMin * initialLvl.mult);
+      const initialMax = Math.round(baseMax * initialLvl.mult);
+
       content.innerHTML = `
         <div class="drawer-job-header">
           <span class="drawer-code-badge">${esc(metier.code)}</span>
           <h2 class="drawer-job-title">${esc(metier.titre)}</h2>
           <p class="drawer-domain-path">${esc(metier.domaineGrand)} ${metier.domaineProfessionnel ? '› ' + esc(metier.domaineProfessionnel) : ''}</p>
+          
+          <!-- Dynamic Salary Block with Level Selector -->
           <div class="drawer-salary-block">
             <span class="drawer-salary-icon">💰</span>
-            <div>
-              <div class="drawer-salary-val">${sal.min} – ${sal.max} TND / mois</div>
-              <div class="drawer-salary-note">*Basé sur données INS 2022 · ${totalSkills} compétences</div>
+            <div style="flex:1">
+              <div class="drawer-salary-val" id="drawer-salary-display">
+                ${initialMin.toLocaleString()} – ${initialMax.toLocaleString()} ${currency} / ${period}
+              </div>
+              <div class="drawer-salary-note" id="drawer-salary-note">
+                Niveau : <strong>Junior</strong> (1-3 ans) · ${initialLvl.bonus}
+              </div>
             </div>
+          </div>
+
+          <!-- Interactive Seniority Level Pills -->
+          <div class="drawer-level-nav" id="drawer-level-nav">
+            ${levelsDef.map(l => `
+              <button type="button" class="drawer-level-pill ${l.id === 'junior' ? 'active' : ''}" data-level="${l.id}" data-min="${Math.round(baseMin * l.mult)}" data-max="${Math.round(baseMax * l.mult)}" data-bonus="${l.bonus}" data-exp="${l.exp}" data-label="${l.label}">
+                <span>${l.label}</span>
+                <span class="level-pill-exp">${l.exp}</span>
+              </button>
+            `).join('')}
           </div>
         </div>
 
@@ -805,6 +854,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Render full radar in skills tab
       fullRadar(metier, 'drawer-radar');
+
+      // Seniority level pill switching in drawer
+      const salDisplay = content.querySelector('#drawer-salary-display');
+      const salNote    = content.querySelector('#drawer-salary-note');
+      content.querySelectorAll('.drawer-level-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          content.querySelectorAll('.drawer-level-pill').forEach(p => p.classList.remove('active'));
+          btn.classList.add('active');
+          const min = Number(btn.dataset.min).toLocaleString();
+          const max = Number(btn.dataset.max).toLocaleString();
+          if (salDisplay) salDisplay.textContent = `${min} – ${max} ${currency} / ${period}`;
+          if (salNote) salNote.innerHTML = `Niveau : <strong>${btn.dataset.label.replace(/^[^\s]+\s*/, '')}</strong> (${btn.dataset.exp}) · ${btn.dataset.bonus}`;
+        });
+      });
 
       // Tab switching
       content.querySelectorAll('.drawer-tab').forEach(btn => {
@@ -1362,6 +1425,251 @@ document.addEventListener('DOMContentLoaded', () => {
 
     output.style.display = 'block';
     output.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // ─── Career Seniority & Salary Simulator Logic ──────────────────────
+  let selectedCareerJob = null;
+  let selectedCareerLevel = 'junior';
+
+  function setupCareerSalarySimulator() {
+    const inputJob    = $('#career-salary-input');
+    const suggBox     = $('#career-salary-sugg');
+    const levelBtns   = $$('#career-level-selector .career-level-btn');
+    const btnSimulate = $('#btn-career-simulate');
+    const btnReset    = $('#btn-career-reset');
+
+    if (!inputJob || !btnSimulate) return;
+
+    // Autocomplete for Job search
+    inputJob.oninput = debounce(() => {
+      const q = inputJob.value.trim().toLowerCase();
+      if (q.length < 2) { suggBox.style.display = 'none'; return; }
+      const matches = (window.allMetiers || []).filter(m => 
+        (m.titre || '').toLowerCase().includes(q) ||
+        (m.code || '').toLowerCase().includes(q) ||
+        (m.domaineGrand || '').toLowerCase().includes(q)
+      ).slice(0, 7);
+
+      if (!matches.length) { suggBox.style.display = 'none'; return; }
+
+      suggBox.innerHTML = `
+        <div class="mobility-sugg-header">🔍 ${matches.length} métier${matches.length > 1 ? 's' : ''} trouvé${matches.length > 1 ? 's' : ''}</div>
+        ${matches.map(m => {
+          const isEsco = m.source === 'esco';
+          return `
+            <div class="career-sugg-item" data-url="${esc(m.url)}">
+              <div class="mobility-sugg-item-left">
+                <span class="mobility-sugg-title">${esc(m.titre)}</span>
+                <span class="mobility-sugg-code">Code : ${esc(m.code || '—')} &nbsp;·&nbsp; ${esc(m.domaineGrand || '')}</span>
+              </div>
+              <span class="mobility-sugg-badge ${isEsco ? 'esco' : 'rtmc'}">${isEsco ? '🇪🇺 ESCO' : '🇹🇳 RTMC'}</span>
+            </div>`;
+        }).join('')}
+      `;
+
+      suggBox.style.display = 'block';
+
+      suggBox.querySelectorAll('.career-sugg-item').forEach(item => {
+        item.onclick = () => {
+          const found = window.allMetiers.find(m => m.url === item.dataset.url);
+          if (found) {
+            inputJob.value = `${found.titre} (${found.code || ''})`;
+            selectedCareerJob = found;
+          }
+          suggBox.style.display = 'none';
+        };
+      });
+    }, 150);
+
+    document.addEventListener('click', e => {
+      if (!inputJob.contains(e.target) && !suggBox.contains(e.target)) {
+        suggBox.style.display = 'none';
+      }
+    });
+
+    // Level buttons selection
+    levelBtns.forEach(btn => {
+      btn.onclick = () => {
+        levelBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedCareerLevel = btn.dataset.level || 'junior';
+
+        // Auto re-simulate if already rendered
+        const output = $('#career-results-output');
+        if (output && output.style.display === 'block' && selectedCareerJob) {
+          triggerCareerSimulation();
+        }
+      };
+    });
+
+    // Simulate action
+    async function triggerCareerSimulation() {
+      if (!selectedCareerJob) {
+        showToast('Veuillez sélectionner un métier dans la liste', 'warning');
+        return;
+      }
+
+      btnSimulate.disabled = true;
+      btnSimulate.innerHTML = '⏳ Calcul IA en cours...';
+
+      try {
+        const res = await fetch('/api/career-salary', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jobUrl: selectedCareerJob.url || selectedCareerJob.code,
+            level: selectedCareerLevel
+          })
+        });
+
+        const data = await res.json();
+        btnSimulate.disabled = false;
+        btnSimulate.innerHTML = '⚡ Simuler la Carrière & le Salaire';
+
+        if (data.error) throw new Error(data.error);
+
+        renderCareerSalaryResults(data);
+      } catch (err) {
+        btnSimulate.disabled = false;
+        btnSimulate.innerHTML = '⚡ Simuler la Carrière & le Salaire';
+        showToast(err.message || 'Erreur lors de la simulation', 'warning');
+      }
+    }
+
+    btnSimulate.onclick = triggerCareerSimulation;
+
+    // Reset action
+    if (btnReset) {
+      btnReset.onclick = () => {
+        selectedCareerJob = null;
+        selectedCareerLevel = 'junior';
+        inputJob.value = '';
+        levelBtns.forEach(b => b.classList.toggle('active', b.dataset.level === 'junior'));
+        const output = $('#career-results-output');
+        if (output) { output.style.display = 'none'; output.innerHTML = ''; }
+        showToast('Simulateur réinitialisé ✓');
+      };
+    }
+  }
+
+  function renderCareerSalaryResults(data) {
+    const output = $('#career-results-output');
+    if (!output) return;
+
+    const curLvl = data.selectedLevel;
+    const isEsco = data.isEsco;
+    const currency = data.currency;
+    const period = data.period;
+
+    // Find max avg salary among levels for percentage chart bars
+    const maxVal = Math.max(...data.levelList.map(l => l.salaryAvg), 1);
+
+    output.innerHTML = `
+      <!-- KPI Top Grid -->
+      <div class="career-kpi-grid">
+        <div class="career-kpi-card highlight">
+          <span class="career-kpi-label">💰 Fourchette Estimée (${curLvl.label})</span>
+          <span class="career-kpi-value">${curLvl.salaryMin.toLocaleString()} – ${curLvl.salaryMax.toLocaleString()} ${currency}</span>
+          <span class="career-kpi-sub">Moyenne : ~${curLvl.salaryAvg.toLocaleString()} ${currency} / ${period} · ${isEsco ? 'Europe (ESCO)' : 'Tunisie (RTMC)'}</span>
+        </div>
+
+        <div class="career-kpi-card">
+          <span class="career-kpi-label">🎯 Échelon & Expérience</span>
+          <span class="career-kpi-value" style="font-size:22px;color:#1e293b">${curLvl.icon} ${esc(curLvl.label)}</span>
+          <span class="career-kpi-sub" style="color:#64748b">Ancienneté requise : <strong>${curLvl.experience}</strong></span>
+        </div>
+
+        <div class="career-kpi-card">
+          <span class="career-kpi-label">📈 Progression Salariale</span>
+          <span class="career-kpi-value" style="font-size:20px;color:#2563eb">${esc(curLvl.growthBonus)}</span>
+          <span class="career-kpi-sub" style="color:#64748b">Par rapport au palier d'entrée</span>
+        </div>
+      </div>
+
+      <!-- Progression Bar Chart (5 levels) -->
+      <div class="career-progression-chart-box">
+        <div class="career-chart-title">
+          <span>📊 Comparatif des 5 Paliers de Séniorité pour <strong>${esc(data.job.titre)}</strong></span>
+          <span style="font-size:12px;color:var(--text-muted)">Unité : ${currency} / ${period}</span>
+        </div>
+        <div class="career-bars-grid">
+          ${data.levelList.map(l => {
+            const pct = Math.max(15, Math.round((l.salaryAvg / maxVal) * 100));
+            const isSelected = l.id === curLvl.id;
+            return `
+              <div class="career-bar-row ${isSelected ? 'active' : ''}">
+                <div class="career-bar-label">
+                  <span>${l.icon}</span>
+                  <span>${esc(l.label)}</span>
+                </div>
+                <div class="career-bar-track">
+                  <div class="career-bar-fill" style="width: ${pct}%;"></div>
+                </div>
+                <div class="career-bar-val">
+                  ${l.salaryAvg.toLocaleString()} ${currency}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- Split Columns: Skills & Responsibilities -->
+      <div class="career-split-grid">
+        <div class="career-col-card">
+          <div class="career-col-title">
+            <span>🎯</span> Compétences Clés Attendues (${curLvl.label})
+          </div>
+          <div class="career-skill-chips">
+            ${curLvl.prioritySkills && curLvl.prioritySkills.length ? curLvl.prioritySkills.map(s => `
+              <span class="career-chip">✓ ${esc(s)}</span>
+            `).join('') : '<p style="font-size:13px;color:var(--text-muted)">Compétences socles du référentiel.</p>'}
+          </div>
+          <div style="margin-top:auto;padding-top:10px;font-size:12px;color:#2563eb;font-weight:600">
+            Objectif échelon suivant : ${esc(curLvl.nextLevelTarget)}
+          </div>
+        </div>
+
+        <div class="career-col-card">
+          <div class="career-col-title">
+            <span>💼</span> Rôle & Missions Types (${curLvl.label})
+          </div>
+          <p style="font-size:13.5px;color:#334155;line-height:1.5">${esc(curLvl.role)}</p>
+          <p style="font-size:13px;color:#64748b;line-height:1.5;margin-top:6px"><strong>Responsabilités :</strong> ${esc(curLvl.responsibilities)}</p>
+        </div>
+      </div>
+
+      <!-- AI Career Advisor Card -->
+      <div class="career-ai-advice-box">
+        <span class="career-ai-icon">💡</span>
+        <div class="career-ai-content">
+          <div class="career-ai-title">Conseil Stratégique de l'Agent IA Carrière</div>
+          <div class="career-ai-text">
+            ${(data.aiTips || []).map(tip => `<p>• ${esc(tip)}</p>`).join('')}
+          </div>
+          <button type="button" class="btn-career-ask-ai" id="btn-career-ask-chat">
+            💬 Demander conseil à l'Agent IA pour négocier ce salaire
+          </button>
+        </div>
+      </div>
+    `;
+
+    output.style.display = 'block';
+    output.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // Handle AI chat prompt trigger
+    const chatBtn = output.querySelector('#btn-career-ask-chat');
+    if (chatBtn) {
+      chatBtn.onclick = () => {
+        const chatWin = $('#chat-widget-window');
+        const chatInp = $('#chat-widget-input');
+        if (chatWin) chatWin.classList.add('open');
+        if (chatInp) {
+          chatInp.value = `Comment puis-je progresser du niveau ${curLvl.label} au niveau supérieur pour le métier ${data.job.titre} et maximiser mon salaire ?`;
+          chatInp.focus();
+        }
+      };
+    }
   }
 
   // ─── Toast ─────────────────────────────────────────────────────────

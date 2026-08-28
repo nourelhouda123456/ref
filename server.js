@@ -2,7 +2,7 @@ const http = require('http');
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { init, ask, recommend, metiersCount, metiers, getSimilarMetiers, analyzeTransferability } = require('./ragService');
+const { init, ask, recommend, metiersCount, metiers, getSimilarMetiers, analyzeTransferability, calculateCareerAndSalary } = require('./ragService');
 
 const PORT = Number(process.env.PORT || 3000);
 const MAX_BODY_BYTES = 8_000_000;
@@ -84,6 +84,12 @@ async function start() {
           const targetUrl = body.targetUrl || url.searchParams.get('targetUrl');
           if (!sourceUrl || !targetUrl) return json(res, 400, { error: 'sourceUrl et targetUrl requis.' });
           return json(res, 200, analyzeTransferability(sourceUrl, targetUrl));
+        }
+        if (url.pathname === '/api/career-salary') {
+          const jobUrl = body.jobUrl || body.code || body.url || url.searchParams.get('jobUrl') || url.searchParams.get('code') || url.searchParams.get('url');
+          const level = body.level || url.searchParams.get('level') || 'junior';
+          if (!jobUrl) return json(res, 400, { error: 'jobUrl ou code de métier requis.' });
+          return json(res, 200, calculateCareerAndSalary(jobUrl, level));
         }
         return json(res, 404, { error: 'Route API introuvable.' });
       } catch (error) {
