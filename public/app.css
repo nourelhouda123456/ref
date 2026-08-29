@@ -304,32 +304,80 @@ main{width:100%;max-width:100%;overflow-x:hidden}
   max-width: 210px;
 }
 
-.inline-domain-select {
-  appearance: none;
-  -webkit-appearance: none;
+.custom-domain-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   width: 100%;
   background: transparent;
   color: #475569;
-  border: none;
-  padding: 10px 32px 10px 14px;
+  padding: 10px 14px 10px 14px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  outline: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  border: none;
+  outline: none;
+  transition: color 0.2s;
 }
 
-.inline-domain-select:hover {
+.custom-domain-trigger:hover {
   color: #0f172a;
 }
-.inline-domain-select option {
+
+.custom-domain-trigger .caret {
+  width: 14px;
+  height: 14px;
+  margin-left: 12px;
+  flex-shrink: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  transition: transform 0.2s ease;
+}
+
+.custom-domain-wrap.open .caret {
+  transform: rotate(180deg);
+}
+
+.custom-domain-menu {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 0;
+  width: max-content;
+  min-width: 320px;
+  max-width: 520px;
+  display: none;
+}
+
+.custom-domain-menu.open {
+  display: block;
+  animation: dropIn 0.2s cubic-bezier(0.16,1,0.3,1);
+}
+
+.domain-menu-item {
+  padding: 12px 20px;
+  cursor: pointer;
+  font-size: 14px;
   font-weight: 500;
   color: #0f172a;
+  transition: all 0.15s ease;
+  border-bottom: 1px solid #f8fafc;
+  white-space: nowrap;
+}
+
+.domain-menu-item:last-child {
+  border-bottom: none;
+}
+
+.domain-menu-item:hover,
+.domain-menu-item.active {
+  background: #eff6ff;
+  border-left: 3px solid #2563eb;
+  padding-left: 17px;
+  color: #2563eb;
 }
 
 .search-divider {

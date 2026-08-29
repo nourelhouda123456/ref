@@ -367,27 +367,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const domains = [...new Set(window.allMetiers.map(m => m.domaineGrand).filter(Boolean))].sort((a,b) => a.localeCompare(b,'fr'));
 
-    const select = $('#domain-select');
-    if (select) {
-      while (select.options.length > 1) select.remove(1);
+    const triggerWrap = $('#custom-domain-wrap');
+    const trigger = $('#custom-domain-trigger');
+    const triggerText = $('#custom-domain-text');
+    const menu = $('#custom-domain-menu');
+    
+    if (menu && trigger && triggerText) {
+      menu.innerHTML = '';
+      
+      const allDiv = document.createElement('div');
+      allDiv.className = 'domain-menu-item active';
+      allDiv.textContent = 'Tous les domaines';
+      allDiv.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectedDomain = null;
+        triggerText.textContent = 'Tous les domaines';
+        updateFilterAndRender(allDiv);
+      });
+      menu.appendChild(allDiv);
+
       domains.forEach(domain => {
         const count = window.allMetiers.filter(m => m.domaineGrand === domain).length;
-        const option = document.createElement('option');
-        option.value = domain;
-        option.textContent = `${domain} (${count})`;
-        select.appendChild(option);
+        const div = document.createElement('div');
+        div.className = 'domain-menu-item';
+        div.textContent = `${domain} (${count})`;
+        div.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectedDomain = domain;
+          triggerText.textContent = domain;
+          updateFilterAndRender(div);
+        });
+        menu.appendChild(div);
       });
-      select.addEventListener('change', (e) => {
-        const val = e.target.value;
-        selectedDomain = val ? val : null;
+
+      function updateFilterAndRender(activeItem) {
+        menu.classList.remove('open');
+        if (triggerWrap) triggerWrap.classList.remove('open');
+        $$('.domain-menu-item').forEach(el => el.classList.remove('active'));
+        if (activeItem) activeItem.classList.add('active');
+
         activeSearchQuery = '';
         activeSkillFilter = null;
         if ($('#hero-search-input')) $('#hero-search-input').value = '';
         $$('.skill-pill').forEach(p => p.classList.remove('active'));
-        $$('.sector-pill').forEach(p => p.classList.toggle('active', p.textContent.includes(val) && val !== ''));
         visibleCount = 12;
         renderGrid();
         scrollToResults();
+      }
+
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = menu.classList.toggle('open');
+        if (triggerWrap) triggerWrap.classList.toggle('open', isOpen);
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!menu.contains(e.target) && !trigger.contains(e.target)) {
+          menu.classList.remove('open');
+          if (triggerWrap) triggerWrap.classList.remove('open');
+        }
       });
     }
 
