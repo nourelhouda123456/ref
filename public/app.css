@@ -792,48 +792,53 @@ main{width:100%;max-width:100%;overflow-x:hidden}
 
 /* ── DRAWER ──────────────────────────────────────────────────── */
 /* ── GRAND POP-UP MODAL (FICHE MÉTIER) ────────────────────────── */
+/* ── FULL-SCREEN PROFESSIONAL EXECUTIVE DASHBOARD ────────────── */
 .drawer-overlay{
   position:fixed;inset:0;z-index:950;
-  background:rgba(15,23,42,.7);
+  background:rgba(15,23,42,.6);
   backdrop-filter:blur(8px);
   -webkit-backdrop-filter:blur(8px);
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:24px;
+  padding:0;
   opacity:0;pointer-events:none;
-  transition:opacity .3s cubic-bezier(.16,1,.3,1);
+  transition:opacity .35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .drawer-overlay.open{opacity:1;pointer-events:all}
 
 .drawer-sheet{
-  width:100%;
-  max-width:1100px;
-  height:88vh;
-  max-height:88vh;
-  background:#fff;
-  border-radius:20px;
-  border:1px solid rgba(255,255,255,.4);
+  width:100vw;
+  height:100vh;
+  max-width:100vw;
+  max-height:100vh;
+  background:#f8fafc;
+  border-radius:0;
+  border:none;
   display:flex;
   flex-direction:column;
   overflow:hidden;
-  transform:scale(.94) translateY(12px);
-  transition:transform .3s cubic-bezier(.16,1,.3,1);
-  box-shadow:0 25px 70px -15px rgba(15,23,42,.45), 0 0 0 1px rgba(0,0,0,.08);
+  transform:translateY(20px);
+  opacity:0;
+  transition:transform .35s cubic-bezier(0.16, 1, 0.3, 1), opacity .35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.drawer-overlay.open .drawer-sheet{transform:scale(1) translateY(0)}
+.drawer-overlay.open .drawer-sheet{
+  transform:translateY(0);
+  opacity:1;
+}
 
 .drawer-header{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:18px 28px;
-  border-bottom:1.5px solid var(--border);
+  padding:16px 32px;
+  border-bottom:1px solid #e2e8f0;
   flex-shrink:0;
-  background:#fff;
-  border-radius:20px 20px 0 0;
+  background:#ffffff;
+  border-radius:0;
   z-index:10;
+  box-shadow:0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .drawer-title{
@@ -845,23 +850,25 @@ main{width:100%;max-width:100%;overflow-x:hidden}
 }
 
 .drawer-close{
-  width:36px;
-  height:36px;
+  width:42px;
+  height:42px;
   border-radius:50%;
-  border:1.5px solid var(--border);
-  background:#fff;
+  border:1px solid #d1d5db;
+  background:#ffffff;
   font-size:16px;
+  font-weight:300;
   display:grid;
   place-items:center;
-  color:var(--text-muted);
+  color:#4b5563;
   cursor:pointer;
-  transition:all .2s var(--ease);
+  transition:all .25s ease;
+  box-shadow:0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .drawer-close:hover{
-  background:var(--bg);
-  border-color:var(--primary);
-  color:var(--primary);
+  background:#f3f4f6;
+  border-color:#9ca3af;
+  color:#111827;
   transform:rotate(90deg);
 }
 
@@ -869,13 +876,13 @@ main{width:100%;max-width:100%;overflow-x:hidden}
 .drawer-body{
   flex:1;
   overflow-y:auto;
-  padding:24px max(24px, calc((100% - 1040px) / 2));
+  padding:24px max(24px, calc((100% - 1400px) / 2));
   background:#f8fafc;
 }
 
 /* ── FORMAL UNIFIED FICHE MÉTIER DESIGN ────────────────────────── */
 .formal-doc-wrapper {
-  max-width: 1000px;
+  max-width: 1360px;
   margin: 0 auto;
   padding: 8px 0 40px;
 }
@@ -883,7 +890,7 @@ main{width:100%;max-width:100%;overflow-x:hidden}
 /* 2-Column Top Layout split */
 .formal-doc-top-layout {
   display: grid;
-  grid-template-columns: 1fr 380px;
+  grid-template-columns: 1fr 440px;
   gap: 24px;
   align-items: start;
   margin-bottom: 24px;
@@ -3229,7 +3236,11 @@ main{width:100%;max-width:100%;overflow-x:hidden}
   }
 
   .drawer-sheet {
-    max-width: 85%;
+    max-width: 100vw;
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
   }
 }
 
@@ -3490,19 +3501,19 @@ main{width:100%;max-width:100%;overflow-x:hidden}
 
   /* Modal Pop-up mobile */
   .drawer-overlay {
-    padding: 12px;
+    padding: 0;
   }
   .drawer-sheet {
     max-width: 100%;
     width: 100%;
-    height: 94vh;
-    max-height: 94vh;
-    border-radius: 16px;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
   }
 
   .drawer-header {
-    padding: 14px 18px;
-    border-radius: 16px 16px 0 0;
+    padding: 14px 20px;
+    border-radius: 0;
   }
 
   .drawer-body {
@@ -3675,7 +3686,10 @@ main{width:100%;max-width:100%;overflow-x:hidden}
   }
 
   .drawer-sheet {
-    max-width: 1200px;
+    max-width: 100vw;
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
   }
 }
 

@@ -850,7 +850,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="formal-doc-actions">
                   <a href="${esc(metier.url)}" target="_blank" rel="noreferrer" class="btn-formal-outline">📄 Fiche Officielle ANETI / ESCO ↗</a>
                   <button class="btn-formal-primary btn-drawer-compare" data-url="${esc(metier.url)}">⚖ ${d.btn_compare_label}</button>
-                  <button class="btn-formal-outline" onclick="window.print()">🖨️ Imprimer la fiche</button>
                 </div>
               </div>
 
