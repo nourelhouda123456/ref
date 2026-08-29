@@ -824,118 +824,224 @@ document.addEventListener('DOMContentLoaded', () => {
       const initialMax = Math.round(baseMax * initialLvl.mult);
 
       content.innerHTML = `
-        <div class="drawer-job-header">
-          <span class="drawer-code-badge">${esc(metier.code)}</span>
-          <h2 class="drawer-job-title">${esc(metier.titre)}</h2>
-          <p class="drawer-domain-path">${esc(metier.domaineGrand)} ${metier.domaineProfessionnel ? '› ' + esc(metier.domaineProfessionnel) : ''}</p>
-          
-          <!-- Dynamic Salary Block with Level Selector -->
-          <div class="drawer-salary-block">
-            <span class="drawer-salary-icon">💰</span>
-            <div style="flex:1">
-              <div class="drawer-salary-val" id="drawer-salary-display">
-                ${initialMin.toLocaleString()} – ${initialMax.toLocaleString()} ${currency} / ${period}
+        <div class="formal-doc-wrapper">
+
+          <!-- 2-Column Split Executive Layout at the Top -->
+          <div class="formal-doc-top-layout">
+            
+            <!-- Left Column: Identity, Description & Salary -->
+            <div class="formal-doc-left-col">
+              
+              <!-- Identity Header Card -->
+              <div class="formal-doc-header">
+                <div class="formal-doc-meta">
+                  <span class="formal-doc-badge">${isEsco ? '🇪🇺 RÉFÉRENTIEL EUROPÉEN ESCO' : '🇹🇳 RÉFÉRENTIEL NATIONAL TUNISIEN (RTMC)'}</span>
+                  <span class="formal-doc-code">CODE : <strong>${esc(metier.code)}</strong></span>
+                </div>
+
+                <h1 class="formal-doc-title">${esc(metier.titre)}</h1>
+
+                <div class="formal-doc-domain">
+                  <span class="domain-icon">📁</span>
+                  <span><strong>Domaine Grand :</strong> ${esc(metier.domaineGrand)}</span>
+                  ${metier.domaineProfessionnel ? `<span class="sep">›</span><span><strong>Domaine Pro :</strong> ${esc(metier.domaineProfessionnel)}</span>` : ''}
+                </div>
+
+                <div class="formal-doc-actions">
+                  <a href="${esc(metier.url)}" target="_blank" rel="noreferrer" class="btn-formal-outline">📄 Fiche Officielle ANETI / ESCO ↗</a>
+                  <button class="btn-formal-primary btn-drawer-compare" data-url="${esc(metier.url)}">⚖ ${d.btn_compare_label}</button>
+                  <button class="btn-formal-outline" onclick="window.print()">🖨️ Imprimer la fiche</button>
+                </div>
               </div>
-              <div class="drawer-salary-note" id="drawer-salary-note">
-                Niveau : <strong>Junior</strong> (1-3 ans) · ${initialLvl.bonus}
+
+              <!-- Section 01: Description générale & Appellations -->
+              <div class="formal-section">
+                <div class="formal-section-header">
+                  <span class="f-sec-num">01</span>
+                  <h3>Description générale &amp; Appellations</h3>
+                </div>
+                <div class="formal-section-body">
+                  <p class="formal-text-lead">${esc(metier.definition || metier.resume || 'Aucune description spécifique fournie dans le référentiel.')}</p>
+
+                  ${metier.appellations && metier.appellations.length ? `
+                    <div class="formal-subsection">
+                      <h4 class="formal-sub-title">Appellations &amp; Intitulés associés</h4>
+                      <div class="formal-tags-list">
+                        ${metier.appellations.map(a => `<span class="formal-tag-item">${esc(a)}</span>`).join('')}
+                      </div>
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+
+              <!-- Salary Estimates card -->
+              <div class="formal-metric-card" style="margin-bottom: 24px;">
+                <span class="f-metric-label">Estimation Salariale par Expérience</span>
+                <div class="f-metric-val" id="drawer-salary-display">
+                  ${initialMin.toLocaleString()} – ${initialMax.toLocaleString()} ${currency} / ${period}
+                </div>
+                <div class="f-metric-sub" id="drawer-salary-note">
+                  Niveau : <strong>Junior</strong> (1-3 ans) · ${initialLvl.bonus}
+                </div>
+                
+                <div class="formal-level-selector" id="drawer-level-nav">
+                  ${levelsDef.map(l => `
+                    <button type="button" class="f-level-btn ${l.id === 'junior' ? 'active' : ''}" data-level="${l.id}" data-min="${Math.round(baseMin * l.mult)}" data-max="${Math.round(baseMax * l.mult)}" data-bonus="${l.bonus}" data-exp="${l.exp}" data-label="${l.label}">
+                      ${l.label}
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Right Column: Radar Chart (Dès le début, à côté) -->
+            <div class="formal-doc-right-col">
+              <div class="formal-radar-sticky-card">
+                <div class="formal-radar-sticky-header">
+                  <span class="f-sec-num">02</span>
+                  <h3>Profil Radar des Compétences</h3>
+                </div>
+                
+                <div class="formal-radar-wrapper-inner">
+                  <div id="drawer-radar"></div>
+                </div>
+
+                <div class="formal-radar-legend-box">
+                  <div class="f-metric-label">Synthèse des Compétences</div>
+                  <div class="f-metric-val" style="color:#1e40af; font-size:18px; margin-bottom: 8px;">${totalSkills} Compétences Clés</div>
+                  <div class="radar-legend-items">
+                    <span class="radar-legend-dot sf">Savoir-faire: ${(metier.competencesTechniquesSavoirFaire||[]).length}</span>
+                    <span class="radar-legend-dot sv">Savoirs: ${(metier.competencesTechniquesSavoir||[]).length}</span>
+                    <span class="radar-legend-dot ss">Soft Skills: ${(metier.competencesComportementales||[]).length}</span>
+                    ${metier.competencesNumeriques && metier.competencesNumeriques.length ? `<span class="radar-legend-dot sn">Numérique: ${metier.competencesNumeriques.length}</span>` : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div> <!-- End of formal-doc-top-layout -->
+
+          <!-- Section 03: Référentiel des Compétences -->
+          <div class="formal-section">
+            <div class="formal-section-header">
+              <span class="f-sec-num">03</span>
+              <h3>Référentiel détaillé des compétences</h3>
+            </div>
+            <div class="formal-section-body">
+              <div class="formal-skills-grid">
+                ${metier.competencesTechniquesSavoirFaire && metier.competencesTechniquesSavoirFaire.length ? `
+                  <div class="formal-skill-box sf">
+                    <h4>⚡ Savoir-faire techniques &amp; opérationnels</h4>
+                    <ul class="formal-skill-bullets">
+                      ${metier.competencesTechniquesSavoirFaire.map(s => `<li>${esc(s)}</li>`).join('')}
+                    </ul>
+                  </div>
+                ` : ''}
+
+                ${metier.competencesTechniquesSavoir && metier.competencesTechniquesSavoir.length ? `
+                  <div class="formal-skill-box sv">
+                    <h4>📘 Connaissances théoriques &amp; Savoirs</h4>
+                    <ul class="formal-skill-bullets">
+                      ${metier.competencesTechniquesSavoir.map(s => `<li>${esc(s)}</li>`).join('')}
+                    </ul>
+                  </div>
+                ` : ''}
+
+                ${metier.competencesComportementales && metier.competencesComportementales.length ? `
+                  <div class="formal-skill-box ss">
+                    <h4>🤝 Compétences comportementales (Soft Skills)</h4>
+                    <ul class="formal-skill-bullets">
+                      ${metier.competencesComportementales.map(s => `<li>${esc(s)}</li>`).join('')}
+                    </ul>
+                  </div>
+                ` : ''}
+
+                ${metier.competencesNumeriques && metier.competencesNumeriques.length ? `
+                  <div class="formal-skill-box sn">
+                    <h4>💻 Compétences numériques</h4>
+                    <ul class="formal-skill-bullets">
+                      ${metier.competencesNumeriques.map(s => `<li>${esc(s)}</li>`).join('')}
+                    </ul>
+                  </div>
+                ` : ''}
               </div>
             </div>
           </div>
 
-          <!-- Interactive Seniority Level Pills -->
-          <div class="drawer-level-nav" id="drawer-level-nav">
-            ${levelsDef.map(l => `
-              <button type="button" class="drawer-level-pill ${l.id === 'junior' ? 'active' : ''}" data-level="${l.id}" data-min="${Math.round(baseMin * l.mult)}" data-max="${Math.round(baseMax * l.mult)}" data-bonus="${l.bonus}" data-exp="${l.exp}" data-label="${l.label}">
-                <span>${l.label}</span>
-                <span class="level-pill-exp">${l.exp}</span>
-              </button>
-            `).join('')}
+          <!-- Section 04: Environnement & Conditions -->
+          <div class="formal-section">
+            <div class="formal-section-header">
+              <span class="f-sec-num">04</span>
+              <h3>Environnement &amp; Conditions d'exercice</h3>
+            </div>
+            <div class="formal-section-body" style="padding:0;">
+              <table class="formal-spec-table">
+                <tbody>
+                  <tr>
+                    <th scope="row">Structures d'exercice</th>
+                    <td>${(metier.environnementStructures||[]).join(' • ') || 'Non spécifié dans le référentiel.'}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Secteurs d'activité</th>
+                    <td>${(metier.environnementSecteurs||[]).join(' • ') || 'Non spécifié dans le référentiel.'}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Conditions &amp; Contraintes</th>
+                    <td>${(metier.environnementConditions||[]).join(' • ') || 'Non spécifié dans le référentiel.'}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
 
-        <div class="drawer-tabs">
-          <button class="drawer-tab active" data-tab="dt-info">${d.tab_details}</button>
-          <button class="drawer-tab" data-tab="dt-skills">${d.tab_skills}</button>
-          <button class="drawer-tab" data-tab="dt-path">${d.tab_path}</button>
-          <button class="drawer-tab" data-tab="dt-similar">${d.tab_similar}</button>
-        </div>
-
-        <!-- TAB: INFO -->
-        <div class="drawer-tab-panel active" id="dt-info">
-          <p class="drawer-section-title">Description</p>
-          <p class="drawer-definition">${esc(metier.definition || metier.resume || '')}</p>
-          ${metier.appellations && metier.appellations.length ? `
-            <p class="drawer-section-title">Appellations</p>
-            <div class="skills-list">${metier.appellations.map(a => `<span class="skill-chip">${esc(a)}</span>`).join('')}</div>
-          ` : ''}
-          <p class="drawer-section-title">Environnement de travail</p>
-          <p class="drawer-definition"><strong>Structures :</strong> ${(metier.environnementStructures||[]).join(', ') || 'N/A'}</p>
-          <p class="drawer-definition" style="margin-top:6px"><strong>Secteurs :</strong> ${(metier.environnementSecteurs||[]).join(', ') || 'N/A'}</p>
-          <p class="drawer-definition" style="margin-top:6px"><strong>Conditions :</strong> ${(metier.environnementConditions||[]).join(', ') || 'N/A'}</p>
-          <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
-            <a href="${esc(metier.url)}" target="_blank" rel="noreferrer" class="btn-ghost">Fiche ANETI ↗</a>
-            <button class="btn-primary btn-drawer-compare" data-url="${esc(metier.url)}">⚖ ${d.btn_compare_label}</button>
+          <!-- Section 05: Accès à l'emploi -->
+          <div class="formal-section">
+            <div class="formal-section-header">
+              <span class="f-sec-num">05</span>
+              <h3>Conditions d'accès à l'emploi &amp; Diplômes</h3>
+            </div>
+            <div class="formal-section-body">
+              <div class="formal-callout-box">
+                <p style="margin:0;">${esc(metier.accesEmploi || 'L\'accès à cet emploi est soumis aux règles de qualification, de diplôme ou d\'expérience exigées par le référentiel officiel.')}</p>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <!-- TAB: SKILLS -->
-        <div class="drawer-tab-panel" id="dt-skills">
-          <div class="drawer-radar-wrap"><div id="drawer-radar"></div></div>
-          ${metier.competencesTechniquesSavoirFaire && metier.competencesTechniquesSavoirFaire.length ? `
-            <p class="drawer-section-title">⚡ Savoir-faire techniques</p>
-            <div class="skills-list">${metier.competencesTechniquesSavoirFaire.map(s => `<span class="skill-chip sf">${esc(s)}</span>`).join('')}</div>
-          ` : ''}
-          ${metier.competencesTechniquesSavoir && metier.competencesTechniquesSavoir.length ? `
-            <p class="drawer-section-title">📘 Connaissances théoriques</p>
-            <div class="skills-list">${metier.competencesTechniquesSavoir.map(s => `<span class="skill-chip sv">${esc(s)}</span>`).join('')}</div>
-          ` : ''}
-          ${metier.competencesComportementales && metier.competencesComportementales.length ? `
-            <p class="drawer-section-title">🤝 Soft Skills</p>
-            <div class="skills-list">${metier.competencesComportementales.map(s => `<span class="skill-chip ss">${esc(s)}</span>`).join('')}</div>
-          ` : ''}
-          ${metier.competencesNumeriques && metier.competencesNumeriques.length ? `
-            <p class="drawer-section-title">💻 Compétences numériques</p>
-            <div class="skills-list">${metier.competencesNumeriques.map(s => `<span class="skill-chip sn">${esc(s)}</span>`).join('')}</div>
-          ` : ''}
-        </div>
+          <!-- Section 06: Mobilités & Métiers similaires -->
+          <div class="formal-section">
+            <div class="formal-section-header">
+              <span class="f-sec-num">06</span>
+              <h3>Mobilités &amp; Métiers similaires</h3>
+            </div>
+            <div class="formal-section-body">
+              <div class="similar-jobs-list" id="similar-list"><p style="color:var(--text-muted);font-size:14px">Chargement des équivalences…</p></div>
+            </div>
+          </div>
 
-        <!-- TAB: PATH -->
-        <div class="drawer-tab-panel" id="dt-path">
-          <p class="drawer-section-title">Voie d'accès</p>
-          <p class="drawer-definition">${esc(metier.accesEmploi || 'Non spécifié dans le référentiel.')}</p>
-        </div>
+          <!-- Footer -->
+          <div class="formal-doc-footer">
+            <span>Référentiel Officiel RTMC / ESCO — Document généré par metierRef</span>
+            <span>Édition 2026</span>
+          </div>
 
-        <!-- TAB: SIMILAR -->
-        <div class="drawer-tab-panel" id="dt-similar">
-          <p class="drawer-section-title">Métiers similaires</p>
-          <div class="similar-jobs-list" id="similar-list"><p style="color:var(--text-muted);font-size:14px">Chargement…</p></div>
         </div>
       `;
 
-      // Render full radar in skills tab
+      // Render radar chart
       fullRadar(metier, 'drawer-radar');
 
-      // Seniority level pill switching in drawer
+      // Seniority level pill switching in formal mode
       const salDisplay = content.querySelector('#drawer-salary-display');
       const salNote    = content.querySelector('#drawer-salary-note');
-      content.querySelectorAll('.drawer-level-pill').forEach(btn => {
+      content.querySelectorAll('.f-level-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          content.querySelectorAll('.drawer-level-pill').forEach(p => p.classList.remove('active'));
+          content.querySelectorAll('.f-level-btn').forEach(p => p.classList.remove('active'));
           btn.classList.add('active');
           const min = Number(btn.dataset.min).toLocaleString();
           const max = Number(btn.dataset.max).toLocaleString();
           if (salDisplay) salDisplay.textContent = `${min} – ${max} ${currency} / ${period}`;
           if (salNote) salNote.innerHTML = `Niveau : <strong>${btn.dataset.label.replace(/^[^\s]+\s*/, '')}</strong> (${btn.dataset.exp}) · ${btn.dataset.bonus}`;
-        });
-      });
-
-      // Tab switching
-      content.querySelectorAll('.drawer-tab').forEach(btn => {
-        btn.addEventListener('click', () => {
-          content.querySelectorAll('.drawer-tab, .drawer-tab-panel').forEach(el => el.classList.remove('active'));
-          btn.classList.add('active');
-          const panel = content.querySelector('#' + btn.dataset.tab);
-          if (panel) panel.classList.add('active');
         });
       });
 
