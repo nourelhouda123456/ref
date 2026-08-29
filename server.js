@@ -15,7 +15,10 @@ function json(res, status, body) {
 function sendFile(res, file, contentType) {
   fs.readFile(file, (error, data) => {
     if (error) return json(res, 500, { error: 'Impossible de charger l\'interface.' });
-    res.writeHead(200, { 'Content-Type': contentType });
+    res.writeHead(200, { 
+      'Content-Type': contentType,
+      'Cache-Control': 'no-cache, no-store, must-revalidate'
+    });
     res.end(data);
   });
 }
