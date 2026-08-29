@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ─── i18n ──────────────────────────────────────────────────────────
   const T = {
     fr: {
-      nav_home:'Accueil', nav_skills:'Compétences', nav_salary:'Niveaux & Salaires IA', nav_mobility:'Mobilité & Reconversion', nav_about:'À propos',
+      nav_home:'Accueil', nav_skills:'Compétences', nav_salary:'Niveaux et Rémunérations IA', nav_mobility:'Mobilité & Reconversion', nav_about:'À propos',
       btn_explore:'Explorer les métiers', btn_search:'Rechercher',
       btn_discover_skills:'Découvrir les compétences', btn_clear:'✕ Effacer les filtres',
       hero_title:'Découvrez le métier qui vous correspond',
@@ -1667,6 +1667,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!inputJob || !btnSimulate) return;
 
+    const defaultBtnHtml = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg> Générer l'évaluation salariale`;
+
     // Autocomplete for Job search
     inputJob.oninput = debounce(() => {
       const q = inputJob.value.trim().toLowerCase();
@@ -1680,7 +1682,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!matches.length) { suggBox.style.display = 'none'; return; }
 
       suggBox.innerHTML = `
-        <div class="mobility-sugg-header">🔍 ${matches.length} métier${matches.length > 1 ? 's' : ''} trouvé${matches.length > 1 ? 's' : ''}</div>
+        <div class="mobility-sugg-header">${matches.length} résultat${matches.length > 1 ? 's' : ''} correspondant${matches.length > 1 ? 's' : ''}</div>
         ${matches.map(m => {
           const isEsco = m.source === 'esco';
           return `
@@ -1689,7 +1691,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="mobility-sugg-title">${esc(m.titre)}</span>
                 <span class="mobility-sugg-code">Code : ${esc(m.code || '—')} &nbsp;·&nbsp; ${esc(m.domaineGrand || '')}</span>
               </div>
-              <span class="mobility-sugg-badge ${isEsco ? 'esco' : 'rtmc'}">${isEsco ? '🇪🇺 ESCO' : '🇹🇳 RTMC'}</span>
+              <span class="mobility-sugg-badge ${isEsco ? 'esco' : 'rtmc'}">${isEsco ? 'ESCO (Europe)' : 'RTMC (Tunisie)'}</span>
             </div>`;
         }).join('')}
       `;
@@ -1732,12 +1734,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Simulate action
     async function triggerCareerSimulation() {
       if (!selectedCareerJob) {
-        showToast('Veuillez sélectionner un métier dans la liste', 'warning');
+        showToast('Veuillez sélectionner un métier dans la liste.', 'warning');
         return;
       }
 
       btnSimulate.disabled = true;
-      btnSimulate.innerHTML = '⏳ Calcul IA en cours...';
+      btnSimulate.innerHTML = 'Calcul prévisionnel en cours...';
 
       try {
         const res = await fetch('/api/career-salary', {
@@ -1751,15 +1753,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const data = await res.json();
         btnSimulate.disabled = false;
-        btnSimulate.innerHTML = '⚡ Simuler la Carrière & le Salaire';
+        btnSimulate.innerHTML = defaultBtnHtml;
 
         if (data.error) throw new Error(data.error);
 
         renderCareerSalaryResults(data);
       } catch (err) {
         btnSimulate.disabled = false;
-        btnSimulate.innerHTML = '⚡ Simuler la Carrière & le Salaire';
-        showToast(err.message || 'Erreur lors de la simulation', 'warning');
+        btnSimulate.innerHTML = defaultBtnHtml;
+        showToast(err.message || 'Erreur lors du calcul salarial.', 'warning');
       }
     }
 
@@ -1774,7 +1776,7 @@ document.addEventListener('DOMContentLoaded', () => {
         levelBtns.forEach(b => b.classList.toggle('active', b.dataset.level === 'junior'));
         const output = $('#career-results-output');
         if (output) { output.style.display = 'none'; output.innerHTML = ''; }
-        showToast('Simulateur réinitialisé ✓');
+        showToast('Formulaire réinitialisé.');
       };
     }
   }
@@ -1795,38 +1797,39 @@ document.addEventListener('DOMContentLoaded', () => {
       <!-- KPI Top Grid -->
       <div class="career-kpi-grid">
         <div class="career-kpi-card highlight">
-          <span class="career-kpi-label">💰 Fourchette Estimée (${curLvl.label})</span>
+          <span class="career-kpi-label">Fourchette Estimée (${esc(curLvl.label)})</span>
           <span class="career-kpi-value">${curLvl.salaryMin.toLocaleString()} – ${curLvl.salaryMax.toLocaleString()} ${currency}</span>
-          <span class="career-kpi-sub">Moyenne : ~${curLvl.salaryAvg.toLocaleString()} ${currency} / ${period} · ${isEsco ? 'Europe (ESCO)' : 'Tunisie (RTMC)'}</span>
+          <span class="career-kpi-sub">Moyenne indicative : ~${curLvl.salaryAvg.toLocaleString()} ${currency} / ${period} · ${isEsco ? 'Référentiel ESCO' : 'Référentiel RTMC'}</span>
         </div>
 
         <div class="career-kpi-card">
-          <span class="career-kpi-label">🎯 Échelon & Expérience</span>
-          <span class="career-kpi-value" style="font-size:22px;color:#1e293b">${curLvl.icon} ${esc(curLvl.label)}</span>
-          <span class="career-kpi-sub" style="color:#64748b">Ancienneté requise : <strong>${curLvl.experience}</strong></span>
+          <span class="career-kpi-label">Palier & Qualification</span>
+          <span class="career-kpi-value" style="font-size:20px;color:#0f172a">${esc(curLvl.label)}</span>
+          <span class="career-kpi-sub">Ancienneté requise : <strong>${curLvl.experience}</strong></span>
         </div>
 
         <div class="career-kpi-card">
-          <span class="career-kpi-label">📈 Progression Salariale</span>
-          <span class="career-kpi-value" style="font-size:20px;color:#2563eb">${esc(curLvl.growthBonus)}</span>
-          <span class="career-kpi-sub" style="color:#64748b">Par rapport au palier d'entrée</span>
+          <span class="career-kpi-label">Progression Salariale</span>
+          <span class="career-kpi-value" style="font-size:20px;color:var(--primary)">${esc(curLvl.growthBonus)}</span>
+          <span class="career-kpi-sub">Par rapport au niveau d'entrée</span>
         </div>
       </div>
 
       <!-- Progression Bar Chart (5 levels) -->
       <div class="career-progression-chart-box">
         <div class="career-chart-title">
-          <span>📊 Comparatif des 5 Paliers de Séniorité pour <strong>${esc(data.job.titre)}</strong></span>
-          <span style="font-size:12px;color:var(--text-muted)">Unité : ${currency} / ${period}</span>
+          <span>Comparatif des 5 paliers d'expérience pour <strong>${esc(data.job.titre)}</strong></span>
+          <span style="font-size:12px;color:var(--text-muted);font-weight:500">Unité : ${currency} / ${period}</span>
         </div>
         <div class="career-bars-grid">
           ${data.levelList.map(l => {
             const pct = Math.max(15, Math.round((l.salaryAvg / maxVal) * 100));
             const isSelected = l.id === curLvl.id;
+            const tierCode = l.id === 'debutant' ? 'N1' : l.id === 'junior' ? 'N2' : l.id === 'confirme' ? 'N3' : l.id === 'senior' ? 'N4' : 'N5';
             return `
               <div class="career-bar-row ${isSelected ? 'active' : ''}">
                 <div class="career-bar-label">
-                  <span>${l.icon}</span>
+                  <span class="bar-tier-tag">${tierCode}</span>
                   <span>${esc(l.label)}</span>
                 </div>
                 <div class="career-bar-track">
@@ -1845,37 +1848,41 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="career-split-grid">
         <div class="career-col-card">
           <div class="career-col-title">
-            <span>🎯</span> Compétences Clés Attendues (${curLvl.label})
+            Compétences Attendues (${esc(curLvl.label)})
           </div>
           <div class="career-skill-chips">
             ${curLvl.prioritySkills && curLvl.prioritySkills.length ? curLvl.prioritySkills.map(s => `
-              <span class="career-chip">✓ ${esc(s)}</span>
+              <span class="career-chip">${esc(s)}</span>
             `).join('') : '<p style="font-size:13px;color:var(--text-muted)">Compétences socles du référentiel.</p>'}
           </div>
-          <div style="margin-top:auto;padding-top:10px;font-size:12px;color:#2563eb;font-weight:600">
-            Objectif échelon suivant : ${esc(curLvl.nextLevelTarget)}
+          <div style="margin-top:auto;padding-top:10px;font-size:12.5px;color:var(--primary);font-weight:600">
+            Objectif échelon supérieur : ${esc(curLvl.nextLevelTarget)}
           </div>
         </div>
 
         <div class="career-col-card">
           <div class="career-col-title">
-            <span>💼</span> Rôle & Missions Types (${curLvl.label})
+            Missions & Périmètre d'Activité (${esc(curLvl.label)})
           </div>
-          <p style="font-size:13.5px;color:#334155;line-height:1.5">${esc(curLvl.role)}</p>
-          <p style="font-size:13px;color:#64748b;line-height:1.5;margin-top:6px"><strong>Responsabilités :</strong> ${esc(curLvl.responsibilities)}</p>
+          <p style="font-size:13.5px;color:#334155;line-height:1.55">${esc(curLvl.role)}</p>
+          <p style="font-size:13px;color:var(--text-muted);line-height:1.55;margin-top:6px"><strong>Responsabilités :</strong> ${esc(curLvl.responsibilities)}</p>
         </div>
       </div>
 
       <!-- AI Career Advisor Card -->
       <div class="career-ai-advice-box">
-        <span class="career-ai-icon">💡</span>
+        <div class="career-ai-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+          </svg>
+        </div>
         <div class="career-ai-content">
-          <div class="career-ai-title">Conseil Stratégique de l'Agent IA Carrière</div>
+          <div class="career-ai-title">Recommandations & Perspectives RH</div>
           <div class="career-ai-text">
-            ${(data.aiTips || []).map(tip => `<p>• ${esc(tip)}</p>`).join('')}
+            ${(data.aiTips || []).map(tip => `<p style="margin-bottom:4px">• ${esc(tip)}</p>`).join('')}
           </div>
           <button type="button" class="btn-career-ask-ai" id="btn-career-ask-chat">
-            💬 Demander conseil à l'Agent IA pour négocier ce salaire
+            Consulter le conseiller pour ce profil
           </button>
         </div>
       </div>
@@ -1892,7 +1899,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const chatInp = $('#chat-widget-input');
         if (chatWin) chatWin.classList.add('open');
         if (chatInp) {
-          chatInp.value = `Comment puis-je progresser du niveau ${curLvl.label} au niveau supérieur pour le métier ${data.job.titre} et maximiser mon salaire ?`;
+          chatInp.value = `Comment puis-je évoluer du niveau ${curLvl.label} au niveau supérieur pour le métier ${data.job.titre} ?`;
           chatInp.focus();
         }
       };
