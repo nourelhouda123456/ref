@@ -619,7 +619,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const jobs   = window.allMetiers.filter(m => {
         const t = (m.titre||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-        return t.includes(val) || (m.code||'').toLowerCase().includes(val);
+        const matchQuery = t.includes(val) || (m.code||'').toLowerCase().includes(val);
+        if (!matchQuery) return false;
+        if (activeSourceFilter === 'rtmc') return m.source === 'rtmc' || !m.source;
+        if (activeSourceFilter === 'esco') return m.source === 'esco';
+        return true;
       }).slice(0, 6);
 
       const skills = window.allSkills.filter(s =>
