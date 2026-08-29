@@ -140,10 +140,13 @@ main{width:100%;max-width:100%;overflow-x:hidden}
   background-image:radial-gradient(rgba(255,255,255,.14) 1px,transparent 1px);
   background-size:28px 28px;pointer-events:none;
 }
-.hero-content{
-  position:relative;z-index:1;
-  max-width:820px;margin:0 auto;padding:0 28px;
-  text-align:center;
+.hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 28px;
+  text-align: center;
 }
 .hero-badge {
   display: inline-flex;
@@ -168,13 +171,26 @@ main{width:100%;max-width:100%;overflow-x:hidden}
   border-radius: 50%;
   box-shadow: 0 0 10px #4ade80;
 }
-.hero-content h1{
-  color:#fff;font-size:clamp(26px,4.2vw,48px);font-weight:800;
-  line-height:1.15;letter-spacing:-.5px;margin-bottom:14px;
+.hero-content h1 {
+  color: #fff;
+  font-size: clamp(26px, 4.2vw, 48px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -.5px;
+  margin-bottom: 14px;
 }
-.hero-content>p{
-  color:rgba(255,255,255,.82);font-size:clamp(14px,2vw,17px);
-  margin-bottom:28px;line-height:1.65;
+.hero-content > p {
+  color: rgba(255, 255, 255, .88);
+  font-size: clamp(13px, 1.45vw, 16px);
+  margin-bottom: 28px;
+  line-height: 1.5;
+  white-space: nowrap;
+  max-width: 100%;
+}
+@media(max-width: 992px) {
+  .hero-content > p {
+    white-space: normal;
+  }
 }
 
 /* ── Search Bar ──────────────────────────────────────────────── */
