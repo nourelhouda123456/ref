@@ -424,6 +424,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       trigger.addEventListener('click', (e) => {
         e.stopPropagation();
+        // Close search suggestions when opening domain menu (mutual exclusion)
+        const sugg = $('#search-suggestions');
+        if (sugg) { sugg.classList.remove('open'); sugg.style.display = 'none'; }
         const isOpen = menu.classList.toggle('open');
         if (triggerWrap) triggerWrap.classList.toggle('open', isOpen);
       });
@@ -722,7 +725,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearBtn = $('#btn-clear-filters');
     if (!input || !drop || !form) return;
 
+    // Close domain dropdown when focusing on search input (mutual exclusion)
+    input.addEventListener('focus', () => {
+      const domainMenu = $('#custom-domain-menu');
+      const domainWrap = $('#custom-domain-wrap');
+      if (domainMenu) domainMenu.classList.remove('open');
+      if (domainWrap) domainWrap.classList.remove('open');
+    });
+
     input.addEventListener('input', debounce(() => {
+      // Close domain dropdown when typing (mutual exclusion)
+      const domainMenu = $('#custom-domain-menu');
+      const domainWrap = $('#custom-domain-wrap');
+      if (domainMenu) domainMenu.classList.remove('open');
+      if (domainWrap) domainWrap.classList.remove('open');
+
       const val = input.value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
       drop.innerHTML = '';
       if (val.length < 2) { drop.classList.remove('open'); return; }
@@ -800,13 +817,20 @@ document.addEventListener('DOMContentLoaded', () => {
         drop.appendChild(div);
       });
 
+      drop.style.display = '';
       drop.classList.add('open');
     }, 160));
 
     form.addEventListener('submit', e => {
       e.preventDefault();
       const val = input.value.trim();
+      // Close BOTH dropdowns on search submit
       drop.classList.remove('open');
+      drop.style.display = 'none';
+      const domainMenu = $('#custom-domain-menu');
+      const domainWrap = $('#custom-domain-wrap');
+      if (domainMenu) domainMenu.classList.remove('open');
+      if (domainWrap) domainWrap.classList.remove('open');
       activeSearchQuery = val;
       selectedDomain    = null;
       activeSkillFilter = null;
