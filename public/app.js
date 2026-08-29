@@ -19,6 +19,46 @@ document.addEventListener('DOMContentLoaded', () => {
   const $$ = s => document.querySelectorAll(s);
   const esc = (v = '') => String(v).replace(/[&<>'"\u202f]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":"&#39;",'"':'&quot;','\u202f':' '}[c]));
 
+  // ─── Relevance Scoring for Search & Autocomplete ─────────────────
+  const getRelevanceScore = (metier, query) => {
+    if (!query) return 0;
+    const q = query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    if (!q) return 0;
+
+    const t = (metier.titre || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    const c = (metier.code || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+    // 1. Title exact match or title starts with query
+    if (t === q) return 1000;
+    if (t.startsWith(q)) return 900;
+
+    // 2. Any word in title starts with query
+    const words = t.split(/[\s\-_'\/]+/);
+    if (words.some(w => w.startsWith(q))) return 800;
+
+    // 3. Appellations start with query
+    const apps = (metier.appellations || []).map(a => (a || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+    if (apps.some(a => a.startsWith(q))) return 700;
+
+    // 4. Code starts with query
+    if (c.startsWith(q)) return 600;
+
+    // 5. Any word in appellations starts with query
+    if (apps.some(a => a.split(/[\s\-_'\/]+/).some(w => w.startsWith(q)))) return 500;
+
+    // 6. Title contains query anywhere
+    if (t.includes(q)) return 400;
+
+    // 7. Appellations contain query anywhere
+    if (apps.some(a => a.includes(q))) return 300;
+
+    // 8. Definition contains query
+    const def = (metier.definition || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (def.includes(q)) return 200;
+
+    return 0;
+  };
+
   // ─── Domain Emojis ─────────────────────────────────────────────────
   const EMOJIS = {
     'Agriculture et pêche': '🌾',
@@ -379,11 +419,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (activeSearchQuery) {
-      const q = activeSearchQuery.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-      list = list.filter(m => {
-        const check = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(q);
-        return check(m.titre) || check(m.code) || check(m.definition) || (m.appellations||[]).some(check);
-      });
+      list = list.map(m => ({ metier: m, score: getRelevanceScore(m, activeSearchQuery) }))
+        .filter(item => item.score > 0)
+        .sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score;
+          return (a.metier.titre || '').length - (b.metier.titre || '').length;
+        })
+        .map(item => item.metier);
     }
 
     // Count bar
@@ -617,29 +659,43 @@ document.addEventListener('DOMContentLoaded', () => {
       drop.innerHTML = '';
       if (val.length < 2) { drop.classList.remove('open'); return; }
 
-      const jobs   = window.allMetiers.filter(m => {
-        const t = (m.titre||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-        const matchQuery = t.includes(val) || (m.code||'').toLowerCase().includes(val);
-        if (!matchQuery) return false;
-        if (activeSourceFilter === 'rtmc') return m.source === 'rtmc' || !m.source;
-        if (activeSourceFilter === 'esco') return m.source === 'esco';
-        return true;
-      }).slice(0, 6);
+      let jobs = window.allMetiers.map(m => ({ metier: m, score: getRelevanceScore(m, val) }))
+        .filter(item => {
+          if (item.score <= 0) return false;
+          if (activeSourceFilter === 'rtmc') return item.metier.source === 'rtmc' || !item.metier.source;
+          if (activeSourceFilter === 'esco') return item.metier.source === 'esco';
+          return true;
+        });
+
+      jobs.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return (a.metier.titre || '').length - (b.metier.titre || '').length;
+      });
+
+      const topJobs = jobs.slice(0, 6).map(item => item.metier);
 
       const skills = window.allSkills.filter(s =>
         s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(val)
-      ).slice(0, 3);
+      ).sort((a, b) => {
+        const na = a.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        const nb = b.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        const aStart = na.startsWith(val);
+        const bStart = nb.startsWith(val);
+        if (aStart && !bStart) return -1;
+        if (!aStart && bStart) return 1;
+        return na.localeCompare(nb);
+      }).slice(0, 3);
 
-      if (!jobs.length && !skills.length) { drop.classList.remove('open'); return; }
+      if (!topJobs.length && !skills.length) { drop.classList.remove('open'); return; }
 
-      if (jobs.length) {
+      if (topJobs.length) {
         const label = document.createElement('div');
         label.className = 'sugg-label';
         label.textContent = '💼 Métiers';
         drop.appendChild(label);
       }
 
-      jobs.forEach(m => {
+      topJobs.forEach(m => {
         const div = document.createElement('div');
         div.className = 'suggestion-item';
         div.innerHTML = `<span class="s-icon">💼</span><div><strong>${esc(m.titre)}</strong><small>${esc(m.domaineGrand)} · ${esc(m.code)}</small></div>`;
