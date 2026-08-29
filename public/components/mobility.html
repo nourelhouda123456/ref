@@ -5,9 +5,14 @@
     <!-- Section Header -->
     <div class="mobility-section-header">
       <div class="mobility-section-header-left">
-        <span class="section-badge">🌉 Mobility & Career Matrix</span>
-        <h2 class="mobility-section-title">Matrice de Transférabilité &amp; Reconversion</h2>
-        <p class="mobility-section-desc">Comparez 2 métiers (RTMC 🇹🇳 &amp; ESCO 🇪🇺), mesurez votre score d'adéquation et obtenez un plan de reconversion personnalisé.</p>
+        <span class="section-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+          </svg>
+          PASSERELLES &amp; TRANSFÉRABILITÉ DES COMPÉTENCES
+        </span>
+        <h2 class="mobility-section-title">Matrice de Mobilité et Analyse d'Adéquation</h2>
+        <p class="mobility-section-desc">Évaluez la transférabilité des compétences entre deux métiers du RTMC (Tunisie 🇹🇳) et de l'ESCO (Europe 🇪🇺), mesurez le taux de recouvrement et identifiez les compétences clés à développer.</p>
       </div>
       <div class="mobility-section-header-right">
         <div class="mobility-stat-pill">🇹🇳 530 métiers RTMC</div>
@@ -19,17 +24,17 @@
     <div class="mobility-steps-row">
       <div class="mobility-step active">
         <span class="mobility-step-num">1</span>
-        <span class="mobility-step-label">Métier Source (A)</span>
+        <span class="mobility-step-label">Métier d'origine (A)</span>
       </div>
       <div class="mobility-step-line"></div>
       <div class="mobility-step active">
         <span class="mobility-step-num">2</span>
-        <span class="mobility-step-label">Métier Cible (B)</span>
+        <span class="mobility-step-label">Métier cible (B)</span>
       </div>
       <div class="mobility-step-line"></div>
       <div class="mobility-step" id="mobility-step-result">
         <span class="mobility-step-num">3</span>
-        <span class="mobility-step-label">Résultats IA</span>
+        <span class="mobility-step-label">Rapport d'évaluation</span>
       </div>
     </div>
 
@@ -41,26 +46,41 @@
         <div class="mobility-field-group">
           <label for="mobility-input-source">
             <span class="mobility-field-badge mobility-field-badge-a">A</span>
-            Métier Actuel &amp; Source
+            Métier d'origine ou profil actuel
           </label>
           <div class="mobility-input-wrap">
-            <span class="mobility-input-icon">💼</span>
-            <input type="text" id="mobility-input-source" placeholder="Ex: Conducteur d'engins agricoles…" autocomplete="off">
+            <span class="mobility-input-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </span>
+            <input type="text" id="mobility-input-source" placeholder="Rechercher par intitulé ou code (ex : Électromécanicien, A1101...)" autocomplete="off">
             <div class="mobility-sugg-box" id="mobility-sugg-source"></div>
           </div>
         </div>
 
-        <div class="mobility-arrow-icon">➔</div>
+        <div class="mobility-arrow-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </div>
 
         <!-- Target Job B -->
         <div class="mobility-field-group">
           <label for="mobility-input-target">
             <span class="mobility-field-badge mobility-field-badge-b">B</span>
-            Métier Visé &amp; Cible
+            Métier cible envisagé
           </label>
           <div class="mobility-input-wrap">
-            <span class="mobility-input-icon">🎯</span>
-            <input type="text" id="mobility-input-target" placeholder="Ex: Mécanicien d'engins de chantier…" autocomplete="off">
+            <span class="mobility-input-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+              </svg>
+            </span>
+            <input type="text" id="mobility-input-target" placeholder="Rechercher le métier visé (ex : Développeur web, Technicien...)" autocomplete="off">
             <div class="mobility-sugg-box" id="mobility-sugg-target"></div>
           </div>
         </div>
@@ -68,10 +88,16 @@
         <!-- Action Buttons -->
         <div class="mobility-action-group">
           <button class="btn-primary btn-mobility-analyze" id="btn-analyze-mobility">
-            ⚡ Analyser
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <line x1="20" y1="8" x2="20" y2="14"></line>
+              <line x1="23" y1="11" x2="17" y2="11"></line>
+            </svg>
+            Analyser la passerelle
           </button>
-          <button class="btn-mobility-reset" id="btn-reset-mobility" title="Réinitialiser l'analyse">
-            ↺ Réinitialiser
+          <button class="btn-mobility-reset" id="btn-reset-mobility" title="Réinitialiser le formulaire">
+            Réinitialiser
           </button>
         </div>
       </div>

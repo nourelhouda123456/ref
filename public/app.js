@@ -1562,6 +1562,18 @@ document.addEventListener('DOMContentLoaded', () => {
       btnAnalyze.textContent = '⏳ Analyse en cours...';
 
       try {
+        const btnAnalyzeContent = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="8.5" cy="7" r="4"></circle>
+            <line x1="20" y1="8" x2="20" y2="14"></line>
+            <line x1="23" y1="11" x2="17" y2="11"></line>
+          </svg>
+          Analyser la passerelle
+        `;
+        btnAnalyze.disabled = true;
+        btnAnalyze.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px"></span> Analyse en cours...';
+
         const res = await fetch('/api/transferability', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1573,7 +1585,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const data = await res.json();
         btnAnalyze.disabled = false;
-        btnAnalyze.innerHTML = '⚡ Analyser';
+        btnAnalyze.innerHTML = btnAnalyzeContent;
 
         if (data.error) throw new Error(data.error);
 
@@ -1584,8 +1596,16 @@ document.addEventListener('DOMContentLoaded', () => {
         renderMobilityResults(data);
       } catch (err) {
         btnAnalyze.disabled = false;
-        btnAnalyze.innerHTML = '⚡ Analyser';
-        showToast(err.message || 'Erreur lors de l\'analyse', 'warning');
+        btnAnalyze.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="8.5" cy="7" r="4"></circle>
+            <line x1="20" y1="8" x2="20" y2="14"></line>
+            <line x1="23" y1="11" x2="17" y2="11"></line>
+          </svg>
+          Analyser la passerelle
+        `;
+        showToast(err.message || 'Erreur lors de l\'analyse.', 'warning');
       }
     };
 
@@ -1601,7 +1621,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (out) { out.style.display = 'none'; out.innerHTML = ''; }
         const s3 = document.getElementById('mobility-step-result');
         if (s3) s3.classList.remove('active', 'done');
-        showToast('Analyse réinitialisée ✓');
+        showToast('Formulaire réinitialisé.');
       };
     }
   }
@@ -1620,20 +1640,20 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="mobility-score-circle" style="--score-deg: ${scoreDeg}">
             <span class="mobility-score-val">${data.matchPercentage}%</span>
           </div>
-          <span class="mobility-gauge-label">Transférabilité</span>
+          <span class="mobility-gauge-label">Indice de Transférabilité</span>
         </div>
 
         <div class="mobility-info-cols">
           <h3 class="mobility-job-title">
-            Passerelle : <span style="color:var(--primary)">${esc(data.sourceJob.titre)}</span> ➔ <span style="color:#059669">${esc(data.targetJob.titre)}</span>
+            Passerelle professionnelle : <span style="color:var(--primary)">${esc(data.sourceJob.titre)}</span> ➔ <span style="color:#059669">${esc(data.targetJob.titre)}</span>
           </h3>
-          <div>
-            <span class="chat-source-origin ${isSourceEsco ? 'chat-badge-esco' : 'chat-badge-rtmc'}">${isSourceEsco ? '🇪🇺 ESCO' : '🇹🇳 RTMC'}</span>
-            ➔
-            <span class="chat-source-origin ${isTargetEsco ? 'chat-badge-esco' : 'chat-badge-rtmc'}">${isTargetEsco ? '🇪🇺 ESCO' : '🇹🇳 RTMC'}</span>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-muted)">
+            <span>Référentiel source : <strong class="chat-source-origin ${isSourceEsco ? 'chat-badge-esco' : 'chat-badge-rtmc'}">${isSourceEsco ? '🇪🇺 ESCO' : '🇹🇳 RTMC'}</strong></span>
+            <span>➔</span>
+            <span>Référentiel cible : <strong class="chat-source-origin ${isTargetEsco ? 'chat-badge-esco' : 'chat-badge-rtmc'}">${isTargetEsco ? '🇪🇺 ESCO' : '🇹🇳 RTMC'}</strong></span>
           </div>
           <div class="mobility-badge-effort ${data.effortClass}">
-            📊 Niveau d'Effort : ${esc(data.effort)}
+            Indice d'effort d'adaptation : <strong>${esc(data.effort)}</strong>
           </div>
         </div>
       </div>
@@ -1641,24 +1661,33 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="mobility-skills-grid">
         <div class="mobility-skills-col">
           <div class="mobility-skills-head acquired">
-            <span>✅ Compétences Déjà Acquises (${data.acquiredSkills.length})</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <span>Compétences Transférables &amp; Socles Communs (${data.acquiredSkills.length})</span>
           </div>
           ${data.acquiredSkills.length ? data.acquiredSkills.map(s => `
             <div class="mobility-skill-item acquired">
-              <span>✓ ${esc(s)}</span>
+              <span>${esc(s)}</span>
             </div>
-          `).join('') : '<p style="font-size:13px;color:var(--text-muted)">Aucune compétence directe commune identifiée.</p>'}
+          `).join('') : '<p style="font-size:13px;color:var(--text-muted)">Aucune compétence directe commune identifiée dans les descriptifs officiels.</p>'}
         </div>
 
         <div class="mobility-skills-col">
           <div class="mobility-skills-head missing">
-            <span>⚡ Compétences à Acquérir / Écart (${data.missingSkills.length})</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>Compétences Complémentaires à Développer (${data.missingSkills.length})</span>
           </div>
           ${data.missingSkills.length ? data.missingSkills.map(s => `
             <div class="mobility-skill-item missing">
-              <span>+ ${esc(s)}</span>
+              <span>${esc(s)}</span>
             </div>
-          `).join('') : '<p style="font-size:13px;color:#16a34a">🎉 Profil 100% prêt pour cette reconversion !</p>'}
+          `).join('') : '<p style="font-size:13px;color:#16a34a;font-weight:600">Adéquation complète : l\'ensemble des compétences requises sont déjà acquises.</p>'}
         </div>
       </div>
     `;

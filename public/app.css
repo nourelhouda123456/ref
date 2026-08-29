@@ -2207,11 +2207,18 @@ main{width:100%;max-width:100%;overflow-x:hidden}
   border-bottom: 1px solid var(--border);
   position: relative;
   overflow: visible;
+  z-index: 50;
 }
+
+.mobility-section:focus-within {
+  z-index: 999 !important;
+}
+
 /* Clip the decorative ::before blob without clipping dropdown overlays */
 .mobility-section > .container {
   position: relative;
-  z-index: 1;
+  z-index: 60;
+  overflow: visible;
 }
 
 .mobility-section::before {
@@ -2373,6 +2380,9 @@ main{width:100%;max-width:100%;overflow-x:hidden}
   padding: 32px;
   box-shadow: 0 4px 24px rgba(37, 99, 235, 0.07), 0 1px 4px rgba(0,0,0,0.06);
   margin-top: 24px;
+  position: relative;
+  overflow: visible;
+  z-index: 100;
 }
 
 .mobility-form-row {
@@ -2380,6 +2390,9 @@ main{width:100%;max-width:100%;overflow-x:hidden}
   align-items: flex-end;
   gap: 20px;
   flex-wrap: wrap;
+  position: relative;
+  overflow: visible;
+  z-index: 110;
 }
 
 .mobility-field-group {
@@ -2388,6 +2401,8 @@ main{width:100%;max-width:100%;overflow-x:hidden}
   display: flex;
   flex-direction: column;
   gap: 10px;
+  position: relative;
+  z-index: 120;
 }
 
 .mobility-field-group label {
@@ -2401,6 +2416,7 @@ main{width:100%;max-width:100%;overflow-x:hidden}
 
 .mobility-input-wrap {
   position: relative;
+  z-index: 200;
 }
 
 .mobility-input-wrap input {
@@ -2427,14 +2443,14 @@ main{width:100%;max-width:100%;overflow-x:hidden}
   top: calc(100% + 6px);
   left: 0;
   right: 0;
-  background: #ffffff;
+  background: #ffffff !important;
   border: 1.5px solid var(--primary);
   border-radius: 12px;
-  box-shadow: 0 12px 40px rgba(37, 99, 235, 0.14), 0 2px 8px rgba(0,0,0,0.08);
-  max-height: 280px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25), 0 6px 18px rgba(0, 0, 0, 0.12);
+  max-height: 290px;
   overflow-x: hidden;
   overflow-y: auto;
-  z-index: 9999;
+  z-index: 999999 !important;
   display: none;
 }
 
@@ -2453,6 +2469,7 @@ main{width:100%;max-width:100%;overflow-x:hidden}
 }
 
 .mobility-sugg-item {
+  background: #ffffff;
   padding: 12px 16px;
   cursor: pointer;
   border-bottom: 1px solid #f1f5f9;
@@ -2516,12 +2533,23 @@ main{width:100%;max-width:100%;overflow-x:hidden}
 
 /* ── Arrow icon ─── */
 .mobility-arrow-icon {
-  font-size: 28px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
   color: var(--primary);
-  font-weight: bold;
-  padding-bottom: 8px;
-  opacity: 0.7;
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
+  margin-bottom: 4px;
+  transition: all 0.25s ease;
+}
+
+.mobility-box:hover .mobility-arrow-icon {
+  transform: scale(1.06);
+  background: var(--primary-light);
+  border-color: var(--primary);
 }
 
 /* ── Action group ─── */
@@ -2534,34 +2562,51 @@ main{width:100%;max-width:100%;overflow-x:hidden}
 }
 
 .btn-mobility-analyze {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   padding: 13px 24px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   border-radius: var(--r-md);
   white-space: nowrap;
+  background: var(--primary);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+  transition: all 0.25s ease;
+}
+
+.btn-mobility-analyze:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
 }
 
 /* ── Reset button ─── */
 .btn-mobility-reset {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 11px 18px;
-  border: 1.5px solid var(--border);
+  padding: 10px 18px;
+  border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: #fff;
   color: var(--text-muted);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: var(--t);
   white-space: nowrap;
 }
 
 .btn-mobility-reset:hover {
-  background: #fee2e2;
-  color: #b91c1c;
-  border-color: #fca5a5;
+  background: #f8fafc;
+  color: #334155;
+  border-color: #cbd5e1;
 }
 
 /* ── Field badges A/B ─── */
@@ -2594,26 +2639,27 @@ main{width:100%;max-width:100%;overflow-x:hidden}
 
 .mobility-input-icon {
   position: absolute;
-  left: 12px;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 16px;
+  color: #94a3b8;
+  display: grid;
+  place-items: center;
   pointer-events: none;
   z-index: 1;
 }
 
 .mobility-input-wrap input {
   width: 100%;
-  padding: 14px 18px 14px 44px;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 15px;
+  padding: 13px 18px 13px 44px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-md);
+  font-size: 14.5px;
   font-weight: 500;
   color: #0f172a;
-  background: #ffffff;
-  transition: var(--t);
+  background: #fcfdfe;
+  transition: all 0.2s ease;
   box-sizing: border-box;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
 .mobility-input-wrap input::placeholder {
@@ -2849,7 +2895,12 @@ main{width:100%;max-width:100%;overflow-x:hidden}
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  z-index: 10;
+}
+
+.career-salary-section:focus-within {
+  z-index: 999 !important;
 }
 
 /* Ambient decorative glow */
