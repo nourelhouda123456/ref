@@ -27,34 +27,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const t = (metier.titre || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
     const c = (metier.code || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    const d = (metier.domaineGrand || metier.domaine || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
 
-    // 1. Title exact match or title starts with query
-    if (t === q) return 1000;
-    if (t.startsWith(q)) return 900;
+    // 1. Titre exact
+    if (t === q) return 10000;
 
-    // 2. Any word in title starts with query
+    // 2. Le titre commence exactement par la requête (ex: "Développeur..." avec "de" ou "dev")
+    if (t.startsWith(q)) return 8000;
+
+    // 3. Un mot du titre commence par la requête (ex: "Ingénieur Développeur" avec "dev")
     const words = t.split(/[\s\-_'\/]+/);
-    if (words.some(w => w.startsWith(q))) return 800;
+    if (words.some(w => w.startsWith(q))) return 6000;
 
-    // 3. Appellations start with query
+    // 4. Code métier commence par la requête (ex: "M1805" avec "M18")
+    if (c.startsWith(q)) return 5000;
+
+    // 5. Appellations / synonymes commencent par la requête
     const apps = (metier.appellations || []).map(a => (a || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
-    if (apps.some(a => a.startsWith(q))) return 700;
+    if (apps.some(a => a.startsWith(q))) return 4000;
+    if (apps.some(a => a.split(/[\s\-_'\/]+/).some(w => w.startsWith(q)))) return 3000;
 
-    // 4. Code starts with query
-    if (c.startsWith(q)) return 600;
+    // 6. Le titre contient la requête
+    if (t.includes(q)) return 2000;
 
-    // 5. Any word in appellations starts with query
-    if (apps.some(a => a.split(/[\s\-_'\/]+/).some(w => w.startsWith(q)))) return 500;
+    // 7. Appellations contiennent la requête
+    if (apps.some(a => a.includes(q))) return 1000;
 
-    // 6. Title contains query anywhere
-    if (t.includes(q)) return 400;
+    // 8. Domaine commence par ou contient la requête
+    if (d.startsWith(q)) return 500;
+    if (d.includes(q)) return 300;
 
-    // 7. Appellations contain query anywhere
-    if (apps.some(a => a.includes(q))) return 300;
-
-    // 8. Definition contains query
+    // 9. Définition contient la requête
     const def = (metier.definition || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    if (def.includes(q)) return 200;
+    if (def.includes(q)) return 100;
 
     return 0;
   };
@@ -1491,19 +1496,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setupAutocomplete(inputEl, suggEl, onSelect) {
       inputEl.oninput = debounce(() => {
-        const q = inputEl.value.trim().toLowerCase();
-        if (q.length < 2) { suggEl.style.display = 'none'; return; }
-        const matches = (window.allMetiers || []).filter(m => 
-          (m.titre || '').toLowerCase().includes(q) || (m.code || '').toLowerCase().includes(q)
-        ).slice(0, 7);
+        const q = inputEl.value.trim();
+        if (q.length < 1) { suggEl.style.display = 'none'; return; }
+        const matches = (window.allMetiers || [])
+          .map(m => ({ metier: m, score: getRelevanceScore(m, q) }))
+          .filter(item => item.score > 0)
+          .sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            return (a.metier.titre || '').length - (b.metier.titre || '').length;
+          })
+          .slice(0, 8)
+          .map(item => item.metier);
 
         if (!matches.length) { suggEl.style.display = 'none'; return; }
 
-        const header = `<div class="mobility-sugg-header">🔍 ${matches.length} résultat${matches.length > 1 ? 's' : ''} trouvé${matches.length > 1 ? 's' : ''}</div>`;
+        const header = `<div class="mobility-sugg-header">${matches.length} résultat${matches.length > 1 ? 's' : ''} correspondant${matches.length > 1 ? 's' : ''}</div>`;
         const items = matches.map(m => {
           const isEsco = m.source === 'esco';
           const badgeClass = isEsco ? 'esco' : 'rtmc';
-          const badgeLabel = isEsco ? '🇪🇺 ESCO' : '🇹🇳 RTMC';
+          const badgeLabel = isEsco ? 'ESCO (Europe)' : 'RTMC (Tunisie)';
           return `
             <div class="mobility-sugg-item" data-url="${esc(m.url)}">
               <div class="mobility-sugg-item-left">
@@ -1527,7 +1538,7 @@ document.addEventListener('DOMContentLoaded', () => {
             suggEl.style.display = 'none';
           };
         });
-      }, 150);
+      }, 120);
 
       document.addEventListener('click', e => {
         if (!inputEl.contains(e.target) && !suggEl.contains(e.target)) {
@@ -1671,13 +1682,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Autocomplete for Job search
     inputJob.oninput = debounce(() => {
-      const q = inputJob.value.trim().toLowerCase();
-      if (q.length < 2) { suggBox.style.display = 'none'; return; }
-      const matches = (window.allMetiers || []).filter(m => 
-        (m.titre || '').toLowerCase().includes(q) ||
-        (m.code || '').toLowerCase().includes(q) ||
-        (m.domaineGrand || '').toLowerCase().includes(q)
-      ).slice(0, 7);
+      const q = inputJob.value.trim();
+      if (q.length < 1) { suggBox.style.display = 'none'; return; }
+      
+      const matches = (window.allMetiers || [])
+        .map(m => ({ metier: m, score: getRelevanceScore(m, q) }))
+        .filter(item => item.score > 0)
+        .sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score;
+          return (a.metier.titre || '').length - (b.metier.titre || '').length;
+        })
+        .slice(0, 8)
+        .map(item => item.metier);
 
       if (!matches.length) { suggBox.style.display = 'none'; return; }
 
@@ -1708,7 +1724,7 @@ document.addEventListener('DOMContentLoaded', () => {
           suggBox.style.display = 'none';
         };
       });
-    }, 150);
+    }, 120);
 
     document.addEventListener('click', e => {
       if (!inputJob.contains(e.target) && !suggBox.contains(e.target)) {

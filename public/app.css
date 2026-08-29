@@ -2917,12 +2917,20 @@ main{width:100%;max-width:100%;overflow-x:hidden}
   border-radius: var(--r-lg);
   padding: 36px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0,0,0,0.02);
+  position: relative;
+  overflow: visible;
+  z-index: 20;
 }
 
 .career-sim-field-group {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  position: relative;
+}
+
+.career-sim-field-group:first-child {
+  z-index: 100;
 }
 
 .career-sim-field-group label {
@@ -2950,6 +2958,7 @@ main{width:100%;max-width:100%;overflow-x:hidden}
 
 .career-input-wrap {
   position: relative;
+  z-index: 200;
 }
 
 .career-input-wrap input {
@@ -2979,13 +2988,27 @@ main{width:100%;max-width:100%;overflow-x:hidden}
   left: 0;
   right: 0;
   background: #ffffff;
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--primary);
   border-radius: var(--r-md);
-  box-shadow: var(--sh-lg);
-  max-height: 280px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.08);
+  max-height: 320px;
+  overflow-x: hidden;
   overflow-y: auto;
-  z-index: 999;
+  z-index: 99999;
   display: none;
+}
+
+.career-sugg-box::-webkit-scrollbar {
+  width: 6px;
+}
+
+.career-sugg-box::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.career-sugg-box::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .career-sugg-item {
