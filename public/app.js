@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ─── i18n ──────────────────────────────────────────────────────────
   const T = {
     fr: {
-      nav_home:'Accueil', nav_skills:'Compétences', nav_mobility:'Mobilité & Reconversion', nav_about:'À propos',
+      nav_home:'Accueil', nav_skills:'Compétences', nav_salary:'Niveaux & Salaires IA', nav_mobility:'Mobilité & Reconversion', nav_about:'À propos',
       btn_explore:'Explorer les métiers', btn_search:'Rechercher',
       btn_discover_skills:'Découvrir les compétences', btn_clear:'✕ Effacer les filtres',
       hero_title:'Découvrez le métier qui vous correspond',
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn_details:'Plus de détails →'
     },
     en: {
-      nav_home:'Home', nav_skills:'Skills', nav_mobility:'Mobility & Career Shift', nav_about:'About',
+      nav_home:'Home', nav_skills:'Skills', nav_salary:'Levels & Salaries AI', nav_mobility:'Mobility & Career Shift', nav_about:'About',
       btn_explore:'Explore Careers', btn_search:'Search',
       btn_discover_skills:'Discover Skills', btn_clear:'✕ Clear filters',
       hero_title:'Discover the career that matches you',
