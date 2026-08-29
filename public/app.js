@@ -363,10 +363,33 @@ document.addEventListener('DOMContentLoaded', () => {
   // ─── Sector Pills ──────────────────────────────────────────────────
   function renderSectorPills() {
     const wrap = $('#sector-pills');
-    if (!wrap) return;
-    wrap.innerHTML = '';
+    if (wrap) wrap.innerHTML = '';
 
     const domains = [...new Set(window.allMetiers.map(m => m.domaineGrand).filter(Boolean))].sort((a,b) => a.localeCompare(b,'fr'));
+
+    const select = $('#domain-select');
+    if (select) {
+      while (select.options.length > 1) select.remove(1);
+      domains.forEach(domain => {
+        const count = window.allMetiers.filter(m => m.domaineGrand === domain).length;
+        const option = document.createElement('option');
+        option.value = domain;
+        option.textContent = `${domain} (${count})`;
+        select.appendChild(option);
+      });
+      select.addEventListener('change', (e) => {
+        const val = e.target.value;
+        selectedDomain = val ? val : null;
+        activeSearchQuery = '';
+        activeSkillFilter = null;
+        if ($('#hero-search-input')) $('#hero-search-input').value = '';
+        $$('.skill-pill').forEach(p => p.classList.remove('active'));
+        $$('.sector-pill').forEach(p => p.classList.toggle('active', p.textContent.includes(val) && val !== ''));
+        visibleCount = 12;
+        renderGrid();
+        scrollToResults();
+      });
+    }
 
     domains.forEach(domain => {
       const count = window.allMetiers.filter(m => m.domaineGrand === domain).length;
@@ -388,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
         scrollToResults();
       });
 
-      wrap.appendChild(pill);
+      if (wrap) wrap.appendChild(pill);
     });
   }
 
@@ -760,6 +783,7 @@ document.addEventListener('DOMContentLoaded', () => {
         activeSkillFilter = null;
         input.value       = '';
         $$('.sector-pill').forEach(p => p.classList.remove('active'));
+        if ($('#domain-select')) $('#domain-select').value = '';
         $$('.skill-pill').forEach(p => p.classList.remove('active'));
         visibleCount = 12;
         renderGrid();
