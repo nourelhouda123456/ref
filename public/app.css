@@ -156,7 +156,6 @@
   --palette-dark-blue-85: rgba(20,70,115,0.85);
 
   --palette-cream-10: rgba(242,217,208,0.10);
-
   --palette-brown-80: rgba(140,51,31,0.8);
 }
 
@@ -181,9 +180,9 @@ main{width:100%;max-width:100%;overflow-x:hidden}
 .header{
   position:fixed;top:0;left:0;right:0;z-index:800;
   height:var(--hh);
-  background:rgba(255,255,255,.9);
+  background:rgba(255,255,255,.92);
   backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  border-bottom:1px solid rgba(226,232,240,.6);
+  border-bottom:1px solid rgba(226,232,240,.8);
   transition:var(--t);
 }
 .header.scrolled{box-shadow:var(--sh-sm)}
@@ -201,14 +200,51 @@ main{width:100%;max-width:100%;overflow-x:hidden}
 }
 .brand-text strong{font-size:16px;font-weight:700;color:var(--text);display:block;line-height:1.1}
 .brand-text small{font-size:11px;color:var(--text-light);font-weight:400}
-.header-nav{display:flex;gap:2px;margin-left:auto}
+
+/* ── NAV LINK ANIMATED UNDERLINE & COLOR HOVER EFFECT ──────── */
+.header-nav{display:flex;gap:6px;margin-left:auto;align-items:center}
 .nav-link{
-  padding:7px 14px;border-radius:var(--r-full);
-  font-size:14px;font-weight:500;color:var(--text-muted);
-  transition:var(--t);
+  position: relative;
+  padding: 8px 16px;
+  border-radius: var(--r-md);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: color 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
 }
-.nav-link:hover{background:var(--primary-light);color:var(--primary)}
-.header-actions{display:flex;align-items:center;gap:10px}
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 12px;
+  right: 12px;
+  height: 2.5px;
+  background: linear-gradient(90deg, #102646 0%, #EF7408 100%);
+  border-radius: var(--r-full);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.nav-link:hover {
+  color: #102646;
+  background: rgba(16, 38, 70, 0.06);
+}
+.nav-link:hover::after {
+  transform: scaleX(1);
+}
+.nav-link.active,
+.nav-link.active:hover {
+  color: #EF7408;
+  font-weight: 700;
+}
+.nav-link.active::after {
+  transform: scaleX(1);
+  background: #EF7408;
+}
+
 .header-actions{display:flex;align-items:center;gap:10px;margin-left:auto}
 .lang-select{
   appearance: none;
@@ -1033,9 +1069,14 @@ main{width:100%;max-width:100%;overflow-x:hidden}
 
 
 /* ── CTA BAND ────────────────────────────────────────────────── */
-.cta-band{
-  background:linear-gradient(135deg,#102646,#102646);
-  padding:80px 0;text-align:center;color:#fff;
+.cta-band {
+  background: linear-gradient(135deg, #0d1e37 0%, #102646 50%, #144673 100%);
+  position: relative;
+  overflow: hidden;
+  padding: 90px 0;
+  text-align: center;
+  color: #fff;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 .cta-band h2{font-size:clamp(22px,3vw,34px);font-weight:800;margin-bottom:14px;letter-spacing:-.3px}
 .cta-band p{opacity:.78;margin-bottom:28px;font-size:16px}
@@ -1043,14 +1084,20 @@ main{width:100%;max-width:100%;overflow-x:hidden}
 .cta-band .btn-primary:hover{background:rgba(71,124,168,0.08);box-shadow:0 6px 24px rgba(0,0,0,.2)}
 
 /* ── FOOTER ──────────────────────────────────────────────────── */
-.site-footer{background:#212121;color:rgba(255,255,255,.6);padding:56px 0 24px}
+.site-footer {
+  background: #0b1a30;
+  border-top: 1px solid rgba(71, 124, 168, 0.2);
+  color: rgba(255, 255, 255, .7);
+  padding: 64px 0 28px;
+  position: relative;
+}
 .footer-cols{display:grid;grid-template-columns:2fr 1fr 1fr;gap:40px;margin-bottom:40px}
 .footer-brand-col .brand strong{color:#fff}
 .footer-brand-col p{font-size:13px;margin-top:12px;line-height:1.75;color:rgba(255,255,255,.5)}
 .site-footer h4{color:#fff;font-size:13px;font-weight:700;margin-bottom:14px;letter-spacing:.3px}
 .footer-links li+li{margin-top:8px}
 .footer-links a{font-size:13px;color:rgba(255,255,255,.5);transition:var(--t)}
-.footer-links a:hover{color:#fff}
+.footer-links a:hover { color: #EF7408; transform: translateX(3px); }
 .footer-bottom{border-top:1px solid rgba(255,255,255,.08);padding-top:20px;font-size:12px;text-align:center;color:rgba(255,255,255,.3)}
 
 /* ── DRAWER ──────────────────────────────────────────────────── */
@@ -2491,11 +2538,14 @@ main{width:100%;max-width:100%;overflow-x:hidden}
 
 /* ── Form Card ─── */
 .section-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
   font-weight: 700;
-  color: var(--primary);
-  background: var(--primary-light);
+  color: #102646;
+  background: rgba(16, 38, 70, 0.08);
+  border: 1px solid rgba(239, 116, 8, 0.25);
   padding: 4px 12px;
   border-radius: var(--r-full);
   margin-bottom: 12px;
