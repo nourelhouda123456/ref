@@ -1003,7 +1003,7 @@ function initMetierRefApp() {
 
                 <div class="formal-radar-legend-box">
                   <div class="f-metric-label">Synthèse des Compétences</div>
-                  <div class="f-metric-val" style="color:#1e40af; font-size:18px; margin-bottom: 8px;">${totalSkills} Compétences Clés</div>
+                  <div class="f-metric-val" style="color:#102646; font-size:18px; margin-bottom: 8px;">${totalSkills} Compétences Clés</div>
                   <div class="radar-legend-items">
                     <span class="radar-legend-dot sf">Savoir-faire: ${(metier.competencesTechniquesSavoirFaire||[]).length}</span>
                     <span class="radar-legend-dot sv">Savoirs: ${(metier.competencesTechniquesSavoir||[]).length}</span>
