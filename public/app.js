@@ -1,6 +1,8 @@
 // metierRef — app.js (Complete Rewrite)
-
-document.addEventListener('DOMContentLoaded', () => {
+(() => {
+function initMetierRefApp() {
+  if (window._metierRefInitialized) return;
+  window._metierRefInitialized = true;
   // ─── State ─────────────────────────────────────────────────────────
   window.allMetiers   = [];
   window.allSkills    = [];
@@ -177,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ─── Compact SVG Radar ─────────────────────────────────────────────
   function compactRadar(item, size = 140, isLarge = false) {
     const cats = [
-      { key: 'competencesTechniquesSavoirFaire', label: 'Savoir-faire', color: '#1d4ed8' },
+      { key: 'competencesTechniquesSavoirFaire', label: 'Savoir-faire', color: '#102646' },
       { key: 'competencesTechniquesSavoir',      label: 'Savoirs',      color: '#7c3aed' },
       { key: 'competencesComportementales',      label: 'Soft Skills',  color: '#059669' },
       { key: 'competencesNumeriques',            label: 'Numérique',    color: '#d97706' },
@@ -253,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const className = isLarge ? 'large-radar-svg' : 'compact-radar-svg';
     return `<svg viewBox="0 0 ${size} ${size}" class="${className}" aria-hidden="true" overflow="visible">
       ${rings}${axes}
-      <polygon points="${pts}" fill="rgba(37,99,235,0.22)" stroke="#2563eb" stroke-width="${strokePolyW}" stroke-linejoin="round"/>
+      <polygon points="${pts}" fill="rgba(16,38,70,0.22)" stroke="#102646" stroke-width="${strokePolyW}" stroke-linejoin="round"/>
       ${dots}
       ${labels}
     </svg>`;
@@ -680,7 +682,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <!-- Right: skills grouped -->
           <div class="demo-skills-panel">
             ${sfChips ? `<div class="demo-skill-group">
-              <div class="demo-skill-group-title" style="color:#1d4ed8;border-color:#bfdbfe">⚡ Savoir-faire techniques</div>
+              <div class="demo-skill-group-title" style="color:#102646;border-color:#e5e5e5">⚡ Savoir-faire techniques</div>
               <div class="demo-chips-wrap">${sfChips}</div>
             </div>` : ''}
             ${svChips ? `<div class="demo-skill-group">
@@ -2035,8 +2037,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ─── Initialisation ────────────────────────────────────────────────
-  initMobileMenu();
+    // ─── Initialisation ────────────────────────────────────────────────
+    initMobileMenu();
 
-}); // end DOMContentLoaded
+  } // end initMetierRefApp
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMetierRefApp);
+  } else {
+    initMetierRefApp();
+  }
+  window.initMetierRefApp = initMetierRefApp;
+})();
 

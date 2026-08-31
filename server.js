@@ -8,7 +8,12 @@ const PORT = Number(process.env.PORT || 3000);
 const MAX_BODY_BYTES = 8_000_000;
 
 function json(res, status, body) {
-  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+  res.writeHead(status, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+  });
   res.end(JSON.stringify(body));
 }
 

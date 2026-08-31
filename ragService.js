@@ -649,7 +649,7 @@ function calculateCareerAndSalary(jobUrlOrCode, targetLevel = 'junior') {
       id: 'junior',
       label: 'Junior',
       icon: '⚡',
-      color: '#3b82f6',
+      color: '#477CA8',
       badgeClass: 'level-junior',
       experience: '1 – 3 ans',
       multiplier: 1.00,
