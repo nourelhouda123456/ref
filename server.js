@@ -28,16 +28,7 @@ function sendFile(res, file, contentType) {
   });
 }
 
-function renderHtmlWithIncludes(filePath) {
-  let content = fs.readFileSync(filePath, 'utf8');
-  return content.replace(/<!--\s*include:([a-zA-Z0-9_-]+)\s*-->/g, (match, compName) => {
-    const compFile = path.join(path.dirname(filePath), 'components', `${compName}.html`);
-    if (fs.existsSync(compFile)) {
-      return fs.readFileSync(compFile, 'utf8');
-    }
-    return match;
-  });
-}
+
 
 function readJson(req) {
   return new Promise((resolve, reject) => {
@@ -105,18 +96,16 @@ async function start() {
       }
     }
 
+    // Root API Endpoint
+    if (url.pathname === '/') return json(res, 200, { service: 'API Backend RTMC & ESCO', status: 'online', metiers: metiersCount() });
+
     // Generic static files serving from /public
     const publicDir = path.join(__dirname, 'public');
-    let safePath = url.pathname === '/' ? 'index.html' : url.pathname;
-    safePath = safePath.replace(/^(\.\.[\\/])+/, '');
+    let safePath = url.pathname.replace(/^(\.\.[\\/])+/, '');
     const filePath = path.resolve(publicDir, safePath.startsWith('/') ? safePath.slice(1) : safePath);
 
     if (filePath.startsWith(publicDir) && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
       const ext = path.extname(filePath).toLowerCase();
-      if (ext === '.html') {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        return res.end(renderHtmlWithIncludes(filePath));
-      }
       const mimeTypes = {
         '.css': 'text/css; charset=utf-8',
         '.js': 'application/javascript; charset=utf-8',
