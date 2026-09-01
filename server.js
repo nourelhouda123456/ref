@@ -497,26 +497,6 @@ async function start() {
       return json(res, 200, { service: 'API Backend RTMC & ESCO', status: 'online', metiers: metiersCount() });
     }
 
-    // ── Static files from /public ─────────────────────────────────────────
-    const publicDir = path.join(__dirname, 'public');
-    let safePath    = url.pathname.replace(/^(\.\.[\\/])+/, '');
-    const filePath  = path.resolve(publicDir, safePath.startsWith('/') ? safePath.slice(1) : safePath);
-
-    if (filePath.startsWith(publicDir) && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-      const ext = path.extname(filePath).toLowerCase();
-      const mimeTypes = {
-        '.css': 'text/css; charset=utf-8',
-        '.js':  'application/javascript; charset=utf-8',
-        '.json':'application/json; charset=utf-8',
-        '.png': 'image/png',
-        '.jpg': 'image/jpeg',
-        '.gif': 'image/gif',
-        '.svg': 'image/svg+xml',
-        '.ico': 'image/x-icon',
-      };
-      return sendFile(res, filePath, mimeTypes[ext] || 'application/octet-stream');
-    }
-
     return json(res, 404, { error: 'Ressource introuvable.' });
 
   }).listen(PORT, () => console.log(`🚀 RTMC RAG disponible sur http://localhost:${PORT}`));
