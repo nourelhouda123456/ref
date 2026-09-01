@@ -918,13 +918,25 @@ function initMetierRefApp() {
       const initialMin = Math.round(baseMin * initialLvl.mult);
       const initialMax = Math.round(baseMax * initialLvl.mult);
 
+      const sfList = metier.competencesTechniquesSavoirFaire || [];
+      const svList = metier.competencesTechniquesSavoir || [];
+      const ssList = metier.competencesComportementales || [];
+      const snList = metier.competencesNumeriques || [];
+
+      const sfSample = sfList.slice(0, 3).map(s => `<span class="summary-pill sf">⚡ ${esc(s)}</span>`).join('');
+      
+      const structText = (metier.environnementStructures || []).slice(0, 2).join(', ') || 'Structures variées';
+      const sectText = (metier.environnementSecteurs || []).slice(0, 2).join(', ') || 'Secteurs d\'activité multiples';
+
+      const accesSummary = (metier.accesEmploi || 'Diplôme, formation spécialisée ou expérience équivalente selon la réglementation.').slice(0, 140);
+
       content.innerHTML = `
         <div class="formal-doc-wrapper">
 
-          <!-- 2-Column Split Executive Layout at the Top -->
+          <!-- 2-Column Split Executive Layout at the Top (SECTIONS 1 & 2 DIRECTLY VISIBLE) -->
           <div class="formal-doc-top-layout">
             
-            <!-- Left Column: Identity, Description & Salary -->
+            <!-- Left Column: Identity, Section 01 Description & Salary -->
             <div class="formal-doc-left-col">
               
               <!-- Identity Header Card -->
@@ -948,7 +960,7 @@ function initMetierRefApp() {
                 </div>
               </div>
 
-              <!-- Section 01: Description générale & Appellations -->
+              <!-- Section 01: Description générale & Appellations (DIRECTEMENT VISIBLE) -->
               <div class="formal-section">
                 <div class="formal-section-header">
                   <span class="f-sec-num">01</span>
@@ -968,7 +980,7 @@ function initMetierRefApp() {
                 </div>
               </div>
 
-              <!-- Salary Estimates card -->
+              <!-- Salary Estimates card (DIRECTEMENT VISIBLE) -->
               <div class="formal-metric-card" style="margin-bottom: 24px;">
                 <span class="f-metric-label">Estimation Salariale par Expérience</span>
                 <div class="f-metric-val" id="drawer-salary-display">
@@ -989,7 +1001,7 @@ function initMetierRefApp() {
 
             </div>
 
-            <!-- Right Column: Radar Chart (Dès le début, à côté) -->
+            <!-- Right Column: Section 02 Profil Radar (DIRECTEMENT VISIBLE) -->
             <div class="formal-doc-right-col">
               <div class="formal-radar-sticky-card">
                 <div class="formal-radar-sticky-header">
@@ -1005,10 +1017,10 @@ function initMetierRefApp() {
                   <div class="f-metric-label">Synthèse des Compétences</div>
                   <div class="f-metric-val" style="color:#102646; font-size:18px; margin-bottom: 8px;">${totalSkills} Compétences Clés</div>
                   <div class="radar-legend-items">
-                    <span class="radar-legend-dot sf">Savoir-faire: ${(metier.competencesTechniquesSavoirFaire||[]).length}</span>
-                    <span class="radar-legend-dot sv">Savoirs: ${(metier.competencesTechniquesSavoir||[]).length}</span>
-                    <span class="radar-legend-dot ss">Soft Skills: ${(metier.competencesComportementales||[]).length}</span>
-                    ${metier.competencesNumeriques && metier.competencesNumeriques.length ? `<span class="radar-legend-dot sn">Numérique: ${metier.competencesNumeriques.length}</span>` : ''}
+                    <span class="radar-legend-dot sf">Savoir-faire: ${sfList.length}</span>
+                    <span class="radar-legend-dot sv">Savoirs: ${svList.length}</span>
+                    <span class="radar-legend-dot ss">Soft Skills: ${ssList.length}</span>
+                    ${snList.length ? `<span class="radar-legend-dot sn">Numérique: ${snList.length}</span>` : ''}
                   </div>
                 </div>
               </div>
@@ -1016,46 +1028,70 @@ function initMetierRefApp() {
 
           </div> <!-- End of formal-doc-top-layout -->
 
+          <!-- ══════════════════════════════════════════════════════════
+               SECTIONS SECONDAIRES COMPACTES AVEC BOUTON 'VOIR DÉTAILS'
+               ══════════════════════════════════════════════════════════ -->
+
           <!-- Section 03: Référentiel des Compétences -->
-          <div class="formal-section">
-            <div class="formal-section-header">
-              <span class="f-sec-num">03</span>
-              <h3>Référentiel détaillé des compétences</h3>
+          <div class="formal-section formal-accordion-section" id="sec-03-accordion">
+            <div class="formal-section-header-compact">
+              <div class="f-sec-title-wrap">
+                <span class="f-sec-num">03</span>
+                <div>
+                  <h3>Référentiel détaillé des compétences</h3>
+                  <span class="f-sec-summary-line">${totalSkills} compétences répertoriées (${sfList.length} savoir-faire, ${svList.length} savoirs, ${ssList.length} soft skills)</span>
+                </div>
+              </div>
+              <button type="button" class="btn-toggle-details" aria-expanded="false">
+                <span class="toggle-btn-text">Voir détails</span>
+                <span class="toggle-details-chevron">▼</span>
+              </button>
             </div>
-            <div class="formal-section-body">
+            
+            <!-- Résumé compact visible -->
+            <div class="formal-summary-preview">
+              <span class="summary-pill sf">⚡ ${sfList.length} Savoir-faire</span>
+              <span class="summary-pill sv">📘 ${svList.length} Savoirs</span>
+              <span class="summary-pill ss">🤝 ${ssList.length} Soft Skills</span>
+              ${snList.length ? `<span class="summary-pill sn">💻 ${snList.length} Numérique</span>` : ''}
+              ${sfSample}
+            </div>
+
+            <!-- Détails déroulants -->
+            <div class="formal-details-dropdown">
               <div class="formal-skills-grid">
-                ${metier.competencesTechniquesSavoirFaire && metier.competencesTechniquesSavoirFaire.length ? `
+                ${sfList.length ? `
                   <div class="formal-skill-box sf">
-                    <h4>⚡ Savoir-faire techniques &amp; opérationnels</h4>
+                    <h4>⚡ Savoir-faire techniques &amp; opérationnels (${sfList.length})</h4>
                     <ul class="formal-skill-bullets">
-                      ${metier.competencesTechniquesSavoirFaire.map(s => `<li>${esc(s)}</li>`).join('')}
+                      ${sfList.map(s => `<li>${esc(s)}</li>`).join('')}
                     </ul>
                   </div>
                 ` : ''}
 
-                ${metier.competencesTechniquesSavoir && metier.competencesTechniquesSavoir.length ? `
+                ${svList.length ? `
                   <div class="formal-skill-box sv">
-                    <h4>📘 Connaissances théoriques &amp; Savoirs</h4>
+                    <h4>📘 Connaissances théoriques &amp; Savoirs (${svList.length})</h4>
                     <ul class="formal-skill-bullets">
-                      ${metier.competencesTechniquesSavoir.map(s => `<li>${esc(s)}</li>`).join('')}
+                      ${svList.map(s => `<li>${esc(s)}</li>`).join('')}
                     </ul>
                   </div>
                 ` : ''}
 
-                ${metier.competencesComportementales && metier.competencesComportementales.length ? `
+                ${ssList.length ? `
                   <div class="formal-skill-box ss">
-                    <h4>🤝 Compétences comportementales (Soft Skills)</h4>
+                    <h4>🤝 Compétences comportementales (Soft Skills) (${ssList.length})</h4>
                     <ul class="formal-skill-bullets">
-                      ${metier.competencesComportementales.map(s => `<li>${esc(s)}</li>`).join('')}
+                      ${ssList.map(s => `<li>${esc(s)}</li>`).join('')}
                     </ul>
                   </div>
                 ` : ''}
 
-                ${metier.competencesNumeriques && metier.competencesNumeriques.length ? `
+                ${snList.length ? `
                   <div class="formal-skill-box sn">
-                    <h4>💻 Compétences numériques</h4>
+                    <h4>💻 Compétences numériques (${snList.length})</h4>
                     <ul class="formal-skill-bullets">
-                      ${metier.competencesNumeriques.map(s => `<li>${esc(s)}</li>`).join('')}
+                      ${snList.map(s => `<li>${esc(s)}</li>`).join('')}
                     </ul>
                   </div>
                 ` : ''}
@@ -1064,12 +1100,29 @@ function initMetierRefApp() {
           </div>
 
           <!-- Section 04: Environnement & Conditions -->
-          <div class="formal-section">
-            <div class="formal-section-header">
-              <span class="f-sec-num">04</span>
-              <h3>Environnement &amp; Conditions d'exercice</h3>
+          <div class="formal-section formal-accordion-section" id="sec-04-accordion">
+            <div class="formal-section-header-compact">
+              <div class="f-sec-title-wrap">
+                <span class="f-sec-num">04</span>
+                <div>
+                  <h3>Environnement &amp; Conditions d'exercice</h3>
+                  <span class="f-sec-summary-line">${structText} · ${sectText}</span>
+                </div>
+              </div>
+              <button type="button" class="btn-toggle-details" aria-expanded="false">
+                <span class="toggle-btn-text">Voir détails</span>
+                <span class="toggle-details-chevron">▼</span>
+              </button>
             </div>
-            <div class="formal-section-body" style="padding:0;">
+
+            <!-- Résumé compact visible -->
+            <div class="formal-summary-preview">
+              <span class="summary-pill muted">🏢 Structures : ${structText}</span>
+              <span class="summary-pill muted">🌐 Secteurs : ${sectText}</span>
+            </div>
+
+            <!-- Détails déroulants -->
+            <div class="formal-details-dropdown" style="padding:0;">
               <table class="formal-spec-table">
                 <tbody>
                   <tr>
@@ -1090,25 +1143,57 @@ function initMetierRefApp() {
           </div>
 
           <!-- Section 05: Accès à l'emploi -->
-          <div class="formal-section">
-            <div class="formal-section-header">
-              <span class="f-sec-num">05</span>
-              <h3>Conditions d'accès à l'emploi &amp; Diplômes</h3>
+          <div class="formal-section formal-accordion-section" id="sec-05-accordion">
+            <div class="formal-section-header-compact">
+              <div class="f-sec-title-wrap">
+                <span class="f-sec-num">05</span>
+                <div>
+                  <h3>Conditions d'accès à l'emploi &amp; Diplômes</h3>
+                  <span class="f-sec-summary-line">${accesSummary}${accesSummary.length >= 140 ? '…' : ''}</span>
+                </div>
+              </div>
+              <button type="button" class="btn-toggle-details" aria-expanded="false">
+                <span class="toggle-btn-text">Voir détails</span>
+                <span class="toggle-details-chevron">▼</span>
+              </button>
             </div>
-            <div class="formal-section-body">
+
+            <!-- Résumé compact visible -->
+            <div class="formal-summary-preview">
+              <span class="summary-pill muted">🎓 Diplômes &amp; Conditions d'admission officiels</span>
+            </div>
+
+            <!-- Détails déroulants -->
+            <div class="formal-details-dropdown">
               <div class="formal-callout-box">
                 <p style="margin:0;">${esc(metier.accesEmploi || 'L\'accès à cet emploi est soumis aux règles de qualification, de diplôme ou d\'expérience exigées par le référentiel officiel.')}</p>
               </div>
             </div>
           </div>
 
-          <!-- Section 06: Mobilités & Métiers similaires -->
-          <div class="formal-section">
-            <div class="formal-section-header">
-              <span class="f-sec-num">06</span>
-              <h3>Mobilités &amp; Métiers similaires</h3>
+          <!-- Section 06: Mobilités & Passerelles -->
+          <div class="formal-section formal-accordion-section" id="sec-06-accordion">
+            <div class="formal-section-header-compact">
+              <div class="f-sec-title-wrap">
+                <span class="f-sec-num">06</span>
+                <div>
+                  <h3>Mobilités &amp; Métiers similaires</h3>
+                  <span class="f-sec-summary-line">Passerelles de reconversion et correspondances directes</span>
+                </div>
+              </div>
+              <button type="button" class="btn-toggle-details" aria-expanded="false">
+                <span class="toggle-btn-text">Voir détails</span>
+                <span class="toggle-details-chevron">▼</span>
+              </button>
             </div>
-            <div class="formal-section-body">
+
+            <!-- Résumé compact visible -->
+            <div class="formal-summary-preview">
+              <span class="summary-pill muted">🔄 Analyse d'adéquation et passerelles de carrière</span>
+            </div>
+
+            <!-- Détails déroulants -->
+            <div class="formal-details-dropdown">
               <div class="similar-jobs-list" id="similar-list"><p style="color:var(--text-muted);font-size:14px">Chargement des équivalences…</p></div>
             </div>
           </div>
@@ -1148,6 +1233,24 @@ function initMetierRefApp() {
 
       // Load similar
       loadSimilar(metier.url);
+
+      // Accordion Toggle 'Voir détails' / 'Masquer détails'
+      content.querySelectorAll('.formal-accordion-section').forEach(section => {
+        const header = section.querySelector('.formal-section-header-compact');
+        const btn = section.querySelector('.btn-toggle-details');
+        const btnText = section.querySelector('.toggle-btn-text');
+        
+        function toggleSection(e) {
+          if (e) e.stopPropagation();
+          const isOpen = section.classList.toggle('open');
+          if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+          if (btnText) btnText.textContent = isOpen ? 'Masquer détails' : 'Voir détails';
+        }
+
+        if (header) header.addEventListener('click', toggleSection);
+        if (btn) btn.addEventListener('click', toggleSection);
+      });
+
     }, 120);
 
     // Close
