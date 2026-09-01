@@ -6952,3 +6952,142 @@ body:has(.admin-root) {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+
+/* ══════════════════════════════════════════════════════════════════
+   FORMAL INSTITUTIONAL SKILLS MATRIX DESIGN (Section 03)
+   ══════════════════════════════════════════════════════════════════ */
+.formal-section-header-compact {
+  padding: 18px 24px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
+}
+
+.formal-section-header-compact:hover {
+  background: rgba(16, 38, 70, 0.04);
+}
+
+.formal-section.open .formal-section-header-compact {
+  background: rgba(20, 70, 115, 0.05);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.f-sec-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.f-sec-title-wrap h3 {
+  font-size: 16px;
+  font-weight: 800;
+  color: #102646;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.formal-skills-matrix {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 20px;
+}
+
+.formal-matrix-block {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(16, 38, 70, 0.03);
+  display: flex;
+  flex-direction: column;
+}
+
+.formal-matrix-block.sf { border-top: 3.5px solid #144673; }
+.formal-matrix-block.sv { border-top: 3.5px solid #7c3aed; }
+.formal-matrix-block.ss { border-top: 3.5px solid #059669; }
+.formal-matrix-block.sn { border-top: 3.5px solid #EF7408; }
+
+.matrix-block-header {
+  padding: 14px 18px;
+  background: #fcfdfe;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.matrix-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.matrix-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.matrix-title-row h4 {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.1px;
+}
+
+.matrix-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.matrix-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.matrix-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 11px 18px;
+  border-bottom: 1px solid #f8fafc;
+  font-size: 13.5px;
+  color: #1e293b;
+  line-height: 1.45;
+  transition: background 0.15s ease;
+}
+
+.matrix-list-item:last-child {
+  border-bottom: none;
+}
+
+.matrix-list-item:hover {
+  background: #f8fafc;
+}
+
+.matrix-item-index {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: monospace;
+  color: #94a3b8;
+  padding-top: 2px;
+  flex-shrink: 0;
+}
+
+.matrix-item-text {
+  flex: 1;
+  font-weight: 500;
+}

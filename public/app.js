@@ -923,17 +923,10 @@ function initMetierRefApp() {
       const ssList = metier.competencesComportementales || [];
       const snList = metier.competencesNumeriques || [];
 
-      const sfSample = sfList.slice(0, 3).map(s => `<span class="summary-pill sf">⚡ ${esc(s)}</span>`).join('');
-      
-      const structText = (metier.environnementStructures || []).slice(0, 2).join(', ') || 'Structures variées';
-      const sectText = (metier.environnementSecteurs || []).slice(0, 2).join(', ') || 'Secteurs d\'activité multiples';
-
-      const accesSummary = (metier.accesEmploi || 'Diplôme, formation spécialisée ou expérience équivalente selon la réglementation.').slice(0, 140);
-
       content.innerHTML = `
         <div class="formal-doc-wrapper">
 
-          <!-- 2-Column Split Executive Layout at the Top (SECTIONS 1 & 2 DIRECTLY VISIBLE) -->
+          <!-- 2-Column Split Executive Layout at the Top (SECTIONS 1 & 2 DIRECTEMENT VISIBLES) -->
           <div class="formal-doc-top-layout">
             
             <!-- Left Column: Identity, Section 01 Description & Salary -->
@@ -1029,72 +1022,114 @@ function initMetierRefApp() {
           </div> <!-- End of formal-doc-top-layout -->
 
           <!-- ══════════════════════════════════════════════════════════
-               SECTIONS SECONDAIRES COMPACTES AVEC BOUTON 'VOIR DÉTAILS'
+               SECTIONS ÉPURÉES SANS SOUS-DESCRIPTION (VOIR DÉTAILS UNIQUEMENT)
                ══════════════════════════════════════════════════════════ -->
 
-          <!-- Section 03: Référentiel des Compétences -->
+          <!-- Section 03: Référentiel des Compétences (Matrice Institutionnelle) -->
           <div class="formal-section formal-accordion-section" id="sec-03-accordion">
             <div class="formal-section-header-compact">
               <div class="f-sec-title-wrap">
                 <span class="f-sec-num">03</span>
-                <div>
-                  <h3>Référentiel détaillé des compétences</h3>
-                  <span class="f-sec-summary-line">${totalSkills} compétences répertoriées (${sfList.length} savoir-faire, ${svList.length} savoirs, ${ssList.length} soft skills)</span>
-                </div>
+                <h3>Référentiel détaillé des compétences</h3>
               </div>
               <button type="button" class="btn-toggle-details" aria-expanded="false">
                 <span class="toggle-btn-text">Voir détails</span>
                 <span class="toggle-details-chevron">▼</span>
               </button>
             </div>
-            
-            <!-- Résumé compact visible -->
-            <div class="formal-summary-preview">
-              <span class="summary-pill sf">⚡ ${sfList.length} Savoir-faire</span>
-              <span class="summary-pill sv">📘 ${svList.length} Savoirs</span>
-              <span class="summary-pill ss">🤝 ${ssList.length} Soft Skills</span>
-              ${snList.length ? `<span class="summary-pill sn">💻 ${snList.length} Numérique</span>` : ''}
-              ${sfSample}
-            </div>
 
-            <!-- Détails déroulants -->
+            <!-- Détails déroulants : Matrice Formelle et Structurée -->
             <div class="formal-details-dropdown">
-              <div class="formal-skills-grid">
+              <div class="formal-skills-matrix">
+                
                 ${sfList.length ? `
-                  <div class="formal-skill-box sf">
-                    <h4>⚡ Savoir-faire techniques &amp; opérationnels (${sfList.length})</h4>
-                    <ul class="formal-skill-bullets">
-                      ${sfList.map(s => `<li>${esc(s)}</li>`).join('')}
-                    </ul>
+                  <div class="formal-matrix-block sf">
+                    <div class="matrix-block-header">
+                      <div class="matrix-title-row">
+                        <span class="matrix-icon">⚡</span>
+                        <h4>Savoir-faire techniques &amp; opérationnels</h4>
+                      </div>
+                      <span class="matrix-badge">${sfList.length} compétences</span>
+                    </div>
+                    <div class="matrix-block-body">
+                      <ul class="matrix-list">
+                        ${sfList.map((s, idx) => `
+                          <li class="matrix-list-item">
+                            <span class="matrix-item-index">${String(idx + 1).padStart(2, '0')}</span>
+                            <span class="matrix-item-text">${esc(s)}</span>
+                          </li>
+                        `).join('')}
+                      </ul>
+                    </div>
                   </div>
                 ` : ''}
 
                 ${svList.length ? `
-                  <div class="formal-skill-box sv">
-                    <h4>📘 Connaissances théoriques &amp; Savoirs (${svList.length})</h4>
-                    <ul class="formal-skill-bullets">
-                      ${svList.map(s => `<li>${esc(s)}</li>`).join('')}
-                    </ul>
+                  <div class="formal-matrix-block sv">
+                    <div class="matrix-block-header">
+                      <div class="matrix-title-row">
+                        <span class="matrix-icon">📘</span>
+                        <h4>Connaissances théoriques &amp; Savoirs associés</h4>
+                      </div>
+                      <span class="matrix-badge">${svList.length} connaissances</span>
+                    </div>
+                    <div class="matrix-block-body">
+                      <ul class="matrix-list">
+                        ${svList.map((s, idx) => `
+                          <li class="matrix-list-item">
+                            <span class="matrix-item-index">${String(idx + 1).padStart(2, '0')}</span>
+                            <span class="matrix-item-text">${esc(s)}</span>
+                          </li>
+                        `).join('')}
+                      </ul>
+                    </div>
                   </div>
                 ` : ''}
 
                 ${ssList.length ? `
-                  <div class="formal-skill-box ss">
-                    <h4>🤝 Compétences comportementales (Soft Skills) (${ssList.length})</h4>
-                    <ul class="formal-skill-bullets">
-                      ${ssList.map(s => `<li>${esc(s)}</li>`).join('')}
-                    </ul>
+                  <div class="formal-matrix-block ss">
+                    <div class="matrix-block-header">
+                      <div class="matrix-title-row">
+                        <span class="matrix-icon">🤝</span>
+                        <h4>Compétences comportementales (Soft Skills)</h4>
+                      </div>
+                      <span class="matrix-badge">${ssList.length} aptitudes</span>
+                    </div>
+                    <div class="matrix-block-body">
+                      <ul class="matrix-list">
+                        ${ssList.map((s, idx) => `
+                          <li class="matrix-list-item">
+                            <span class="matrix-item-index">${String(idx + 1).padStart(2, '0')}</span>
+                            <span class="matrix-item-text">${esc(s)}</span>
+                          </li>
+                        `).join('')}
+                      </ul>
+                    </div>
                   </div>
                 ` : ''}
 
                 ${snList.length ? `
-                  <div class="formal-skill-box sn">
-                    <h4>💻 Compétences numériques (${snList.length})</h4>
-                    <ul class="formal-skill-bullets">
-                      ${snList.map(s => `<li>${esc(s)}</li>`).join('')}
-                    </ul>
+                  <div class="formal-matrix-block sn">
+                    <div class="matrix-block-header">
+                      <div class="matrix-title-row">
+                        <span class="matrix-icon">💻</span>
+                        <h4>Compétences numériques &amp; Outils</h4>
+                      </div>
+                      <span class="matrix-badge">${snList.length} compétences</span>
+                    </div>
+                    <div class="matrix-block-body">
+                      <ul class="matrix-list">
+                        ${snList.map((s, idx) => `
+                          <li class="matrix-list-item">
+                            <span class="matrix-item-index">${String(idx + 1).padStart(2, '0')}</span>
+                            <span class="matrix-item-text">${esc(s)}</span>
+                          </li>
+                        `).join('')}
+                      </ul>
+                    </div>
                   </div>
                 ` : ''}
+
               </div>
             </div>
           </div>
@@ -1104,21 +1139,12 @@ function initMetierRefApp() {
             <div class="formal-section-header-compact">
               <div class="f-sec-title-wrap">
                 <span class="f-sec-num">04</span>
-                <div>
-                  <h3>Environnement &amp; Conditions d'exercice</h3>
-                  <span class="f-sec-summary-line">${structText} · ${sectText}</span>
-                </div>
+                <h3>Environnement &amp; Conditions d'exercice</h3>
               </div>
               <button type="button" class="btn-toggle-details" aria-expanded="false">
                 <span class="toggle-btn-text">Voir détails</span>
                 <span class="toggle-details-chevron">▼</span>
               </button>
-            </div>
-
-            <!-- Résumé compact visible -->
-            <div class="formal-summary-preview">
-              <span class="summary-pill muted">🏢 Structures : ${structText}</span>
-              <span class="summary-pill muted">🌐 Secteurs : ${sectText}</span>
             </div>
 
             <!-- Détails déroulants -->
@@ -1147,20 +1173,12 @@ function initMetierRefApp() {
             <div class="formal-section-header-compact">
               <div class="f-sec-title-wrap">
                 <span class="f-sec-num">05</span>
-                <div>
-                  <h3>Conditions d'accès à l'emploi &amp; Diplômes</h3>
-                  <span class="f-sec-summary-line">${accesSummary}${accesSummary.length >= 140 ? '…' : ''}</span>
-                </div>
+                <h3>Conditions d'accès à l'emploi &amp; Diplômes</h3>
               </div>
               <button type="button" class="btn-toggle-details" aria-expanded="false">
                 <span class="toggle-btn-text">Voir détails</span>
                 <span class="toggle-details-chevron">▼</span>
               </button>
-            </div>
-
-            <!-- Résumé compact visible -->
-            <div class="formal-summary-preview">
-              <span class="summary-pill muted">🎓 Diplômes &amp; Conditions d'admission officiels</span>
             </div>
 
             <!-- Détails déroulants -->
@@ -1176,20 +1194,12 @@ function initMetierRefApp() {
             <div class="formal-section-header-compact">
               <div class="f-sec-title-wrap">
                 <span class="f-sec-num">06</span>
-                <div>
-                  <h3>Mobilités &amp; Métiers similaires</h3>
-                  <span class="f-sec-summary-line">Passerelles de reconversion et correspondances directes</span>
-                </div>
+                <h3>Mobilités &amp; Métiers similaires</h3>
               </div>
               <button type="button" class="btn-toggle-details" aria-expanded="false">
                 <span class="toggle-btn-text">Voir détails</span>
                 <span class="toggle-details-chevron">▼</span>
               </button>
-            </div>
-
-            <!-- Résumé compact visible -->
-            <div class="formal-summary-preview">
-              <span class="summary-pill muted">🔄 Analyse d'adéquation et passerelles de carrière</span>
             </div>
 
             <!-- Détails déroulants -->
