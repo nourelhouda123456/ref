@@ -27,8 +27,16 @@ function getEscoCollection() {
   return db.collection('esco');
 }
 
+function getUsersCollection() {
+  return db.collection('users');
+}
+
+function getDomainesCollection() {
+  return db.collection('domaines');
+}
+
 async function closeDB() {
   if (client) await client.close();
 }
 
-module.exports = { connectDB, getMetiersCollection, getEmbeddingsCollection, getEscoCollection, closeDB };
+module.exports = { connectDB, getMetiersCollection, getEmbeddingsCollection, getEscoCollection, getUsersCollection, getDomainesCollection, closeDB };

@@ -6,14 +6,18 @@
   "scripts": {
     "scrape": "node scrapeRtmc.js",
     "embed": "node --env-file=.env generateEmbeddings.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "seed": "node seed.js",
+    "seed:domaines": "node seedDomaines.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
+    "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.6.0",
     "playwright": "^1.62.1"
   }

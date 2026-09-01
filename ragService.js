@@ -30,11 +30,11 @@ async function init() {
     console.log('⚠️ MongoDB non disponible, utilisation des fichiers de secours locaux.');
   }
 
-  // 1. Charger les fiches RTMC
+  // 1. Charger les fiches RTMC (exclure les métiers explicitement désactivés)
   try {
     const metiersCol = getMetiersCollection();
     if (metiersCol) {
-      rtmcMetiers = (await metiersCol.find({}).toArray()).map(m => ({
+      rtmcMetiers = (await metiersCol.find({ active: { $ne: false } }).toArray()).map(m => ({
         ...m,
         source: m.source || 'rtmc',
         domaineGrand: m.domaineGrand || m.domaine || 'RTMC (Tunisie)'
@@ -58,11 +58,11 @@ async function init() {
   }
   console.log(`📚 ${rtmcMetiers.length} fiches métiers RTMC chargées`);
 
-  // 2. Charger les fiches ESCO
+  // 2. Charger les fiches ESCO (exclure les métiers explicitement désactivés)
   try {
     const escoCol = getEscoCollection();
     if (escoCol) {
-      escoMetiers = (await escoCol.find({}).toArray()).map(m => ({
+      escoMetiers = (await escoCol.find({ active: { $ne: false } }).toArray()).map(m => ({
         ...m,
         source: 'esco',
         domaineGrand: m.domaineGrand || 'ESCO (Europe)'
@@ -771,6 +771,18 @@ function calculateCareerAndSalary(jobUrlOrCode, targetLevel = 'junior') {
   };
 }
 
+/**
+ * Recharge le cache en mémoire depuis MongoDB.
+ * Appelé après chaque mutation CRUD admin pour garder le moteur RAG synchronisé.
+ */
+async function refreshCache() {
+  try {
+    await init();
+  } catch (err) {
+    console.warn('⚠️ refreshCache : impossible de recharger les données :', err.message);
+  }
+}
+
 module.exports = {
   init,
   ask,
@@ -781,6 +793,7 @@ module.exports = {
   escoCount: () => escoMetiers.length,
   getSimilarMetiers,
   analyzeTransferability,
-  calculateCareerAndSalary
+  calculateCareerAndSalary,
+  refreshCache,
 };
 
